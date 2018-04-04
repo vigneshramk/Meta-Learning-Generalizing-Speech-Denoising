@@ -71,7 +71,7 @@ def parse_arguments():
                         default=1000, help="Number of epochs to train on.")
     parser.add_argument('--lr', dest='lr', type=float,
                         default=1e-4, help="The actor's learning rate.")
-    parser.add_argument('--batch-size', type=int,
+    parser.add_argument('--batch_size', type=int,
                         default=64, help="Batch size")
     parser.add_argument('--hidden_size', type=int,
                         default=200, help="hidden size")
