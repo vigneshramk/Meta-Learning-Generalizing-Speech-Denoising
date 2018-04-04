@@ -33,9 +33,6 @@ class Autoencoder(nn.Module):
 
 		return x
 
-
-
-
 class Denoise():
 
 	def __init__(self,model,lr):
@@ -70,27 +67,24 @@ class Denoise():
 def parse_arguments():
 	# Command-line flags are defined here.
 	parser = argparse.ArgumentParser()
-	parser.add_argument('--model-config-path', dest='model_config_path',
-						type=str, default='LunarLander-v2-config.json',
-						help="Path to the actor model config file.")
-	parser.add_argument('--num-episodes', dest='num_episodes', type=int,
-						default=50000, help="Number of episodes to train on.")
-	parser.add_argument('--lr', dest='lr', type=float,
-						default=5e-4, help="The actor's learning rate.")
-	parser.add_argument('--critic-lr', dest='critic_lr', type=float,
-						default=1e-4, help="The critic's learning rate.")
-	parser.add_argument('--n', dest='n', type=int,
-						default=20, help="The value of N in N-step A2C.")
+	parser.add_argument('--num-epochs', dest='num_epochs', type=int,
+						default=1000, help="Number of epochs to train on.")
+	# parser.add_argument('--lr', dest='lr', type=float,
+	# 					default=5e-4, help="The actor's learning rate.")
+	# parser.add_argument('--critic-lr', dest='critic_lr', type=float,
+	# 					default=1e-4, help="The critic's learning rate.")
+	# parser.add_argument('--n', dest='n', type=int,
+	# 					default=20, help="The value of N in N-step A2C.")
 
-	# https://stackoverflow.com/questions/15008758/parsing-boolean-values-with-argparse
-	parser_group = parser.add_mutually_exclusive_group(required=False)
-	parser_group.add_argument('--render', dest='render',
-							  action='store_true',
-							  help="Whether to render the environment.")
-	parser_group.add_argument('--no-render', dest='render',
-							  action='store_false',
-							  help="Whether to render the environment.")
-	parser.set_defaults(render=False)
+	# # https://stackoverflow.com/questions/15008758/parsing-boolean-values-with-argparse
+	# parser_group = parser.add_mutually_exclusive_group(required=False)
+	# parser_group.add_argument('--render', dest='render',
+	# 						  action='store_true',
+	# 						  help="Whether to render the environment.")
+	# parser_group.add_argument('--no-render', dest='render',
+	# 						  action='store_false',
+	# 						  help="Whether to render the environment.")
+	# parser.set_defaults(render=False)
 
 	return parser.parse_args()
 
@@ -98,6 +92,7 @@ def parse_arguments():
 def main(args):
 
 	args = parse_arguments()
+	num_epochs = args.num_epochs
 
 	num_samples = 1000
 	num_features = 200
@@ -105,8 +100,6 @@ def main(args):
 	ae_model = Autoencoder(num_features)
 	ae_model.cuda()
 	ae_model.train()
-
-	num_epochs = 100 #Put the number of training samples here
 
 	# Do the data loading here with the given matrix sizes
 	data_full_noisy = np.random.rand(num_samples,num_features)
