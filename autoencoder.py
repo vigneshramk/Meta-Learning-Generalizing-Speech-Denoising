@@ -33,16 +33,34 @@ class Autoencoder(nn.Module):
 
 		return x
 
+
+
+
 class Denoise():
 
+	def __init__(self,model,lr):
+		self.criterion = nn.MSELoss()
+		self.optimizer = torch.optim.Adam(model.parameters(), lr=lr, weight_decay=1e-5)
 
-	def __init__(self):
+	def train_normal(self,data_full_noisy,data_full_clean):
 
-		pass
+		num_data = data_full_noisy.shape[0]
 
-	def train_normal(self):
+		for i in range(num_data):
 
-		pass
+			noisy = data_full_noisy[i]
+			clean = data_full_clean[i]
+
+			noisy = np_to_variable(noisy, requires_grad=True)
+			clean = np_to_variable(clean, requires_grad=False)
+
+			self.loss = self.criterion(noisy, clean)
+			self.optimizer.zero_grad()
+			self.loss.backward()
+			self.optimizer.step()
+
+		return self.loss.data[0]
+
 
 	def train_maml(self):
 
@@ -80,6 +98,31 @@ def parse_arguments():
 def main(args):
 
 	args = parse_arguments()
+
+	num_samples = 1000
+	num_features = 200
+
+	ae_model = Autoencoder(num_features)
+	ae_model.cuda()
+	ae_model.train()
+
+	num_epochs = 100 #Put the number of training samples here
+
+	# Do the data loading here with the given matrix sizes
+	data_full_noisy = np.random.rand(num_samples,num_features)
+	data_full_clean = np.random.rand(num_samples,num_features)
+
+	lr = 1e-3 # Learning rate for the model
+
+	dae = Denoise(ae_model,lr)
+
+	for i in range(num_epochs):
+
+		loss = dae.train_normal(data_full_noisy,data_full_clean)
+
+		print('epoch [{}/{}], MSE_loss:{:.4f}'
+		  .format(i + 1, num_epochs, loss))
+
 
 
 
