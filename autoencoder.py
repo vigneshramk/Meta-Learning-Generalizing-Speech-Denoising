@@ -34,13 +34,37 @@ class Autoencoder(nn.Module):
 
 class Denoise():
 
-	def __init__(self,model,lr):
+	def __init__(self,model,train_lr,meta_lr):
 
 		self.model = model
 
 		self.criterion = nn.MSELoss()
-		self.optimizer = torch.optim.Adam(self.model.parameters(), lr=lr, weight_decay=1e-5)
+		self.optimizer = torch.optim.Adam(self.model.parameters(), lr=train_lr)
+		self.meta_optimizer = torch.optim.Adam(self.model.parameters(), lr=meta_lr)
 
+	def get_weights(self):
+
+		curr_model = {'state_dict': self.model.state_dict()}
+		
+		# if(mode is 'train'):
+		# 	curr_model = {'state_dict': self.model.state_dict()}
+		# 				   # 'optimizer': self.optimizer.state_dict()}
+		# elif(mode is 'meta'):
+		# 	curr_model = {'state_dict': self.model.state_dict()}
+		# 				   # 'optimizer': self.meta_optimizer.state_dict()}
+		return curr_model
+	
+	def set_weights(self,curr_model):
+
+		self.model.load_state_dict(curr_model['state_dict'])
+
+		# if(mode is 'train'):
+		# 	self.model.load_state_dict(curr_model['state_dict'])
+		# 	# self.optimizer.load_state_dict(curr_model['optimizer'])
+		# elif(mode is 'meta'):
+		# 	self.model.load_state_dict(curr_model['state_dict'])
+		# 	# self.meta_optimizer.load_state_dict(curr_model['optimizer'])
+		
 	def train_normal(self,data_full_noisy,data_full_clean):
 
 		num_data = data_full_noisy.shape[0]
@@ -65,21 +89,21 @@ class Denoise():
 		return loss_total/num_data
 
 
-	def train_maml(self,meta_train_noisy,meta_train_clean,train_datapts,meta_train_datapts):
+	def train_maml(self,meta_train_noisy,meta_train_clean,train_datapts,meta_train_datapts,num_iter):
 
-		num_data,num_features,num_tasks = meta_train_noisy.shapes
+		num_data,num_features,num_tasks = meta_train_noisy.shape
 
 		K = train_datapts
 		D = meta_train_datapts
 
-		num_iter = 10000
+		theta_list = []
 
 
 		for i in range(num_iter):
 
 			# Get the theta
 			if i == 0:
-				theta= self.model.get_weights()
+				theta= self.get_weights()
 
 			# Individual gradient updates theta_i's ---Training mode
 			for t in range(num_tasks):
@@ -90,9 +114,27 @@ class Denoise():
 				noisy = meta_train_noisy[idx_train,:,t]
 				clean = meta_train_clean[idx_train,:,t]
 
-				#Update params theta_i
+				noisy = np_to_variable(noisy, requires_grad=True)
+				clean = np_to_variable(clean, requires_grad=False)
 
-			# Theta parameter update --- Meta-training mode	
+				# Initialize the network with current network weights
+				self.set_weights(theta)
+
+				# Train the network with the given K samples
+				self.loss = self.criterion(noisy, clean)
+				self.optimizer.zero_grad()
+				self.loss.backward()
+				self.optimizer.step()
+
+				#Update params theta_i
+				if i == 0:
+					theta_list.append(self.get_weights())
+				else:
+					theta_list[t] = self.get_weights()
+
+
+			# Theta parameter update --- Meta-training mode
+			combined_loss = 0	
 			for t in range(num_tasks):
 
 				#Sample K datapoints from the task t
@@ -101,20 +143,36 @@ class Denoise():
 				noisy = meta_train_noisy[idx_meta,:,t]
 				clean = meta_train_clean[idx_meta,:,t]
 
-				#Update params theta
+				noisy = np_to_variable(noisy, requires_grad=True)
+				clean = np_to_variable(clean, requires_grad=False)
 
-				break
+				#Get the loss w.r.t the theta_i network
+				self.set_weights(theta_list[t])
+				self.loss = self.criterion(noisy, clean)
 
-		return None
+				# Set the model weights to theta before training
+				#Train with this theta on the D samples
+				self.set_weights(theta)
+				self.meta_optimizer.zero_grad()
+				self.loss.backward()
+				self.meta_optimizer.step()
 
+				theta = self.get_weights()
+
+				#Add up the losses from each of these networks
+				combined_loss += self.loss.data[0]
+
+			print("Average Loss in iteration %s is %1.2f" %(i,combined_loss/num_tasks))
 
 def parse_arguments():
 	# Command-line flags are defined here.
 	parser = argparse.ArgumentParser()
 	parser.add_argument('--num-epochs', dest='num_epochs', type=int,
 						default=1000, help="Number of epochs to train on.")
-	parser.add_argument('--lr', dest='lr', type=float,
-						default=1e-4, help="The actor's learning rate.")
+	parser.add_argument('--train_lr', dest='train_lr', type=float,
+						default=1e-4, help="The training learning rate.")
+	parser.add_argument('--meta_lr', dest='meta_lr', type=float,
+						default=1e-4, help="The meta-training learning rate.")
 	parser.add_argument('--batch_size', type=int,
 						default=64, help="Batch size")
 	parser.add_argument('--hidden_size', type=int,
@@ -159,7 +217,8 @@ def main(args):
 
 	args = parse_arguments()
 	num_epochs = args.num_epochs
-	lr = args.lr
+	train_lr = args.train_lr
+	meta_lr = args.meta_lr
 	batch_size = args.batch_size
 	hidden_size = args.hidden_size
 	clean_dir = args.clean_dir
@@ -178,6 +237,8 @@ def main(args):
 	num_tasks = 5
 	train_datapts = 100
 	meta_train_datapts = 100
+
+	num_iter = 10000
 
 	ae_model = Autoencoder(num_features, hidden_size)
 	if torch.cuda.is_available():
@@ -213,19 +274,19 @@ def main(args):
 
 	reg_train_loader = DataLoader(reg_training_data,batch_size=batch_size,shuffle=True,num_workers=0)
 	
-	dae = Denoise(ae_model,lr)
+	dae = Denoise(ae_model,train_lr,meta_lr)
 
 	# Normal training with one SNR
-	for i in range(num_epochs):
+	# for i in range(num_epochs):
 
-		loss = dae.train_normal(data_full_noisy,data_full_clean)
+	# 	loss = dae.train_normal(data_full_noisy,data_full_clean)
 		
-		print('epoch [{}/{}], MSE_loss:{:.4f}'
-		  .format(i + 1, num_epochs, loss))
+	# 	print('epoch [{}/{}], MSE_loss:{:.4f}'
+	# 	  .format(i + 1, num_epochs, loss))
 
 
 	#Meta-training with five SNR
-	dae.train_maml(meta_train_noisy,meta_train_clean)
+	dae.train_maml(meta_train_noisy,meta_train_clean,train_datapts,meta_train_datapts,num_iter)
 
 
 
