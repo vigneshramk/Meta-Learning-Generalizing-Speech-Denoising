@@ -7,11 +7,11 @@ import os
 import librosa
 import librosa.display
 import librosa.core
-
+import random
 
 
 class LoadData(Dataset):
-    def __init__(self, tsv_file, clean_dir, features=None,num_spectograms=3,
+    def __init__(self, tsv_file, clean_dir, features=None, num_spectograms=3,single_frame=True,
                     hop_size=160, n_fft=320, fs=16000,frame_size=21, SNR=None, noise=None):
 
         #Add each line to a list
@@ -32,6 +32,7 @@ class LoadData(Dataset):
         self.clean_dir = clean_dir
         self.frame_size = frame_size
         self.num_spectograms = num_spectograms
+        self.single_frame = single_frame
 
     def __len__(self):
         return len(self.wav)
@@ -47,6 +48,7 @@ class LoadData(Dataset):
 
         #Get Clean Spectogram
         clean_spect = librosa.stft(clean_audio,n_fft=self.n_fft, hop_length=self.hop_size)
+  
 
         #If snr is None, read from the file
         #if noise is None, read from the file
@@ -68,36 +70,59 @@ class LoadData(Dataset):
 
         #creating the spectogram tensor that depends on how many SNR levels to add 
         flatten_length = (self.n_fft/2 + 1) * self.frame_size
-        flatten_noise_spectograms = np.zeros((int(flatten_length), len(self.snr)))
-        flatten_clean_spectograms = np.zeros((int(flatten_length), len(self.snr)))
+
+
+        flatten_noise_spectograms = np.zeros((self.num_spectograms, int(flatten_length), len(self.snr)))
+        flatten_clean_spectograms = np.zeros((self.num_spectograms, int(flatten_length), len(self.snr)))
 
         #loop through SNR array 
         for s in range(len(self.snr)):
             snr_level = self.snr[s]
             noise_audio = utils.add_noise(clean_audio, noise_add, snr_level)
-
             #Get Noise Spectogram
             noise_spect = librosa.stft(noise_audio,n_fft=self.n_fft, hop_length=self.hop_size)
         
             #Get only the magnitudes for clean and noise spectograms
-            magC, phaseC = librosa.magphase(clean_spect)
+            
             magN, phaseN = librosa.magphase(noise_spect)
 
             #Getting equal size spectograms that is frame size long. Start at random spot
-            spect_shape = magC.shape
-            width = spect_shape[1]
 
-            start = np.random.randint(0,width-self.frame_size+1)
-            magC = magC[:,start:start + self.frame_size]
-            magN = magN[:,start:start + self.frame_size]
+            if s == 0:
+                #only on the first SNR, you need to calculate:
+                # - clean magnitude
+                # - start of the cropping
+                # - clean magnitude cropped 
 
-            #flatten spectogram 
-            flatten_magC = magC.flatten()
-            flatten_magN = magN.flatten()
+                magC, phaseC = librosa.magphase(clean_spect)
+                spect_shape = magC.shape
+                width = spect_shape[1]
+                #start = np.random.randint(0,width-self.frame_size+1)
+                starts = random.sample(range(0,width-self.frame_size+1),self.num_spectograms)
+                for num, start in enumerate(starts):
+                    #loop through each of the start frames
+                    #crop the spectogram, flatten, and its the same window for all noise types 
+                    # which means (num_spectogram) gives you a dimxtotal_noise size matrix and each column should be the same for each spectogram window
+                    magC_Crop = magC[:,start:start + self.frame_size]
+                    flatten_magC = magC_Crop.flatten()
+                    flatten_clean_spectograms[num]= np.reshape(flatten_magC,(len(flatten_magC),1))
+                
 
-            #adding it to the spectograms. will be size (flatten_length,# of SNR)
-            flatten_clean_spectograms[:,s] = flatten_magC
-            flatten_noise_spectograms[:,s] = flatten_magN
+            for num, start in enumerate(starts):
+                #adding noises
+                #loop through each of the start frames
+                #crop the specotgram
+                #flatten it out 
+                #and add it to one column of the matrix that represents the noise type
+                #in this case, you are filling in each speoctgram first and then moving on to a new noise type 
+                magN_Crop = magN[:,start:start + self.frame_size]
+
+                #flatten spectogram 
+                flatten_magN = magN_Crop.flatten()
+
+                #adding it to the spectograms. will be size (flatten_length,# of SNR)
+                #add the same clean flatten spectograms for each dimension
+                flatten_noise_spectograms[num][:,s] = flatten_magN
 
 
 

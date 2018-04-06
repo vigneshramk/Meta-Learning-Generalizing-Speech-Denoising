@@ -1,7 +1,6 @@
 import numpy as np
 import numpy.random as rand
 
-
 def sample(x, length, num, verbose=False):
     """
     Given audio x, sample `num` segments with `length` samples each

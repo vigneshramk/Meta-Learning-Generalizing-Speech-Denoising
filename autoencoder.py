@@ -261,7 +261,7 @@ def main(args):
 	meta_train_noisy = np.random.rand(num_samples,num_features,num_tasks)
 	meta_train_clean = np.random.rand(num_samples,num_features,num_tasks)
 
-	
+	"""
 	#one data loader for each SNR
 	meta_training_data_1 = LoadData(tsv_file=meta_training_file, clean_dir=clean_dir,frame_size = frame_size,SNR=-6,noise=noise_type)
 	meta_training_data_2 = LoadData(tsv_file=meta_training_file, clean_dir=clean_dir,frame_size = frame_size,SNR=-3,noise=noise_type)
@@ -280,7 +280,9 @@ def main(args):
 	meta_train_loader_5 = DataLoader(meta_training_data_5,batch_size=batch_size,shuffle=True,num_workers=0)
 
 	reg_train_loader = DataLoader(reg_training_data,batch_size=batch_size,shuffle=True,num_workers=0)
-	
+	"""
+
+    
 	dae = Denoise(ae_model,train_lr,meta_lr)
 
 	# Normal training with one SNR
