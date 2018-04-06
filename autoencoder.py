@@ -17,6 +17,13 @@ def np_to_variable(x, requires_grad=False, dtype=torch.FloatTensor):
 		v = v.cuda()
 	return v
 
+#(12000*5,161*11) all noisetypes together
+#(12000,161*11) one noise type to train/test
+#(12000,161*11,5) one noise types to meta train 
+
+#ALL   3 frames each
+
+#we should try just regular fully connected layers like spectral mapping
 class Autoencoder(nn.Module):
 	def __init__(self, input_size,hidden_size):
 		super(Autoencoder, self).__init__()

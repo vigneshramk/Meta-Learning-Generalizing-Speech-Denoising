@@ -11,7 +11,7 @@ import librosa.core
 
 
 class LoadData(Dataset):
-    def __init__(self, tsv_file, clean_dir, features=None,
+    def __init__(self, tsv_file, clean_dir, features=None,num_spectograms=3,
                     hop_size=160, n_fft=320, fs=16000,frame_size=21, SNR=None, noise=None):
 
         #Add each line to a list
@@ -31,6 +31,7 @@ class LoadData(Dataset):
         self.noise = noise
         self.clean_dir = clean_dir
         self.frame_size = frame_size
+        self.num_spectograms = num_spectograms
 
     def __len__(self):
         return len(self.wav)
@@ -51,7 +52,7 @@ class LoadData(Dataset):
         #if noise is None, read from the file
         #else it is a parameter to dataloader
         if self.snr is None:
-            self.snr = float(self.wav[idx][1])
+            self.snr = [float(self.wav[idx][1])]
         if self.noise is None:
             self.noise = self.wav[idx][2]
 
@@ -64,24 +65,42 @@ class LoadData(Dataset):
             
         elif self.noise == 'factory1':
             [noise_add, noise_fs] = librosa.load('noise/factory1_train.wav', self.fs)
-            
-        noise_audio = utils.add_noise(clean_audio, noise_add, self.snr)
 
-        #Get Noise Spectogram
-        noise_spect = librosa.stft(noise_audio,n_fft=self.n_fft, hop_length=self.hop_size)
+        #creating the spectogram tensor that depends on how many SNR levels to add 
+        flatten_length = (self.n_fft/2 + 1) * self.frame_size
+        flatten_noise_spectograms = np.zeros((flatten_length, len(self.snr)))
+        flatten_clean_spectograms = np.zeros((flatten_length, len(self.snr)))
+
+        #loop through SNR array 
+        for s in range(len(self.snr)):
+            snr_level = self.snr[s]
+            noise_audio = utils.add_noise(clean_audio, noise_add, snr_level)
+
+            #Get Noise Spectogram
+            noise_spect = librosa.stft(noise_audio,n_fft=self.n_fft, hop_length=self.hop_size)
         
-        #Get only the magnitudes for clean and noise spectograms
-        magC, phaseC = librosa.magphase(clean_spect)
-        magN, phaseN = librosa.magphase(noise_spect)
+            #Get only the magnitudes for clean and noise spectograms
+            magC, phaseC = librosa.magphase(clean_spect)
+            magN, phaseN = librosa.magphase(noise_spect)
 
-        #Getting equal size spectograms that is frame size long. Start at random spot
-        spect_shape = magC.shape
-        width = spect_shape[1]
+            #Getting equal size spectograms that is frame size long. Start at random spot
+            spect_shape = magC.shape
+            width = spect_shape[1]
 
-        start = np.random.randint(0,width-self.frame_size+1)
-        magC = magC[:,start:start + self.frame_size]
-        magN = magN[:,start:start + self.frame_size]
+            start = np.random.randint(0,width-self.frame_size+1)
+            magC = magC[:,start:start + self.frame_size]
+            magN = magN[:,start:start + self.frame_size]
+
+            #flatten spectogram 
+            flatten_magC = magC.flatten()
+            flatten_magN = magN.flatten()
+
+            #adding it to the spectograms. will be size (flatten_length,# of SNR)
+            flatten_clean_spectograms[:,s] = flatten_magC
+            flatten_noise_spectograms[:,s] = flatten_magN
+
+
 
         #Return shortened clean and noise spectogram pairs 
-        sample = {'clean_mag': magC, 'noise_mag': magN}
+        sample = {'clean_mag': flatten_clean_spectograms, 'noise_mag': flatten_noise_spectograms}
         return sample
