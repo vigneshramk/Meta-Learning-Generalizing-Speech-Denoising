@@ -33,25 +33,20 @@ meta_training_data = LoadData(tsv_file='dataset/meta_data/train/train.txt', clea
 reg_training_data = LoadData(tsv_file='dataset/meta_data/train/train.txt', clean_dir=data_path,SNR=[6],noise='babble')
 
 #dataloaders
-meta_train_loader = DataLoader(meta_training_data,batch_size=128,shuffle=True,num_workers=0)
-reg_train_loader = DataLoader(reg_training_data,batch_size=128,shuffle=True,num_workers=0) 
+meta_train_loader = DataLoader(meta_training_data,batch_size=1,shuffle=True,num_workers=0)
+reg_train_loader = DataLoader(reg_training_data,batch_size=1,shuffle=True,num_workers=0) 
 
 #looping through the dataloader. Pytorch dataloader automatically randomizes the batches and gives u a new batch each iteration
 for i,batch in enumerate(meta_train_loader):
-    print('meta batch')
-    clean = batch['clean_mag']
-    noise = batch['noise_mag']
-    print(clean.shape)
-    print(noise.shape)
-    break
+    print(i)
+   
+    
+    
 
-for i,batch in enumerate(reg_train_loader):
-    print('regular batch')
-    clean = batch['clean_mag']
-    noise = batch['noise_mag']
-    print(clean.shape)
-    print(noise.shape)
-    break
+#for i,batch in enumerate(reg_train_loader):
+    #print('regular batch')
+   
+    
 
 
 """
