@@ -44,8 +44,6 @@ for i,batch in enumerate(reg_train_loader):
     print(clean.shape)
     print(noise.shape)
     break
-
-
 """
 
 num_spectograms = 3

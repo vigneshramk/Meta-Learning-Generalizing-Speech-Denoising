@@ -11,6 +11,8 @@ from torch.autograd import Variable
 from LoadNoise import LoadData
 from torch.utils.data import DataLoader
 
+import matplotlib.pyplot as plt
+
 def np_to_variable(x, requires_grad=False, dtype=torch.FloatTensor):
 	v = Variable(torch.from_numpy(x).type(dtype), requires_grad=requires_grad)
 	if torch.cuda.is_available():
@@ -72,28 +74,17 @@ class Denoise():
 		# 	self.model.load_state_dict(curr_model['state_dict'])
 		# 	# self.meta_optimizer.load_state_dict(curr_model['optimizer'])
 		
-	def train_normal(self,data_full_noisy,data_full_clean):
+	def train_normal(self,noisy,clean):
 
-		num_data = data_full_noisy.shape[0]
+		noisy = torch.autograd.Variable(noisy,requires_grad=True)
+		clean = torch.autograd.Variable(clean)
+		
+		self.loss = self.criterion(noisy, clean)
+		self.optimizer.zero_grad()
+		self.loss.backward()
+		self.optimizer.step()
 
-		loss_total = 0
-
-		for i in range(num_data):
-
-			noisy = data_full_noisy
-			clean = data_full_clean
-
-			noisy = np_to_variable(noisy, requires_grad=True)
-			clean = np_to_variable(clean, requires_grad=False)
-
-			self.loss = self.criterion(noisy, clean)
-			self.optimizer.zero_grad()
-			self.loss.backward()
-			self.optimizer.step()
-
-			loss_total += self.loss.data[0]
-
-		return loss_total/num_data
+		return self.loss.data[0]
 
 
 	def train_maml(self,meta_train_noisy,meta_train_clean,train_datapts,meta_train_datapts,num_iter):
@@ -181,10 +172,10 @@ def parse_arguments():
 	parser.add_argument('--meta_lr', dest='meta_lr', type=float,
 						default=1e-4, help="The meta-training learning rate.")
 	parser.add_argument('--batch_size', type=int,
-						default=64, help="Batch size")
+						default=400, help="Batch size")
 	parser.add_argument('--hidden_size', type=int,
-						default=200, help="hidden size")
-	parser.add_argument('--clean_dir', type=str, default='/Users/tylervgina/DataSets/LDC93S1/TIMITcorpus/TIMIT/TRAIN/', metavar='N',
+						default=500, help="hidden size")
+	parser.add_argument('--clean_dir', type=str, default='TIMIT/TRAIN/', metavar='N',
 					help='Clean training files')
 	parser.add_argument('--meta_training_file', type=str, default='dataset/meta_data/train/train.txt', metavar='N',
 					help='meta training text file')
@@ -200,7 +191,7 @@ def parse_arguments():
 					help='how much SNR to add to test')
 	parser.add_argument('--noise_type', type=str, default='babble', metavar='N',
 					help='type of noise to add to test')
-	parser.add_argument('--clean_dir_test', type=str, default='/Users/tylervgina/DataSets/LDC93S1/TIMITcorpus/TIMIT/TEST/', metavar='N',
+	parser.add_argument('--clean_dir_test', type=str, default='TIMIT/TEST/', metavar='N',
 					help='Clean testing files')
 	parser.add_argument('--meta_testing_file', type=str, default='dataset/meta_data/test/train.txt', metavar='N',
 					help='meta testing text file')
@@ -262,38 +253,49 @@ def main(args):
 	meta_train_clean = np.random.rand(num_samples,num_features,num_tasks)
 
 	
-	#one data loader for each SNR
-	meta_training_data_1 = LoadData(tsv_file=meta_training_file, clean_dir=clean_dir,frame_size = frame_size,SNR=-6,noise=noise_type)
-	meta_training_data_2 = LoadData(tsv_file=meta_training_file, clean_dir=clean_dir,frame_size = frame_size,SNR=-3,noise=noise_type)
-	meta_training_data_3 = LoadData(tsv_file=meta_training_file, clean_dir=clean_dir,frame_size = frame_size,SNR=0,noise=noise_type)
-	meta_training_data_4 = LoadData(tsv_file=meta_training_file, clean_dir=clean_dir,frame_size = frame_size,SNR=3,noise=noise_type)
-	meta_training_data_5 = LoadData(tsv_file=meta_training_file, clean_dir=clean_dir,frame_size = frame_size,SNR=6,noise=noise_type)
+	# #one data loader for each SNR
+	# meta_training_data_1 = LoadData(tsv_file=meta_training_file, clean_dir=clean_dir,frame_size = frame_size,SNR=-6,noise=noise_type)
+	# meta_training_data_2 = LoadData(tsv_file=meta_training_file, clean_dir=clean_dir,frame_size = frame_size,SNR=-3,noise=noise_type)
+	# meta_training_data_3 = LoadData(tsv_file=meta_training_file, clean_dir=clean_dir,frame_size = frame_size,SNR=0,noise=noise_type)
+	# meta_training_data_4 = LoadData(tsv_file=meta_training_file, clean_dir=clean_dir,frame_size = frame_size,SNR=3,noise=noise_type)
+	# meta_training_data_5 = LoadData(tsv_file=meta_training_file, clean_dir=clean_dir,frame_size = frame_size,SNR=6,noise=noise_type)
 
 	reg_training_data = LoadData(tsv_file=reg_training_file,clean_dir=clean_dir,frame_size = frame_size,noise=noise_type)
 
-	#ACTUAL DATA LOADERS for each meta/reg
+	# #ACTUAL DATA LOADERS for each meta/reg
 
-	meta_train_loader_1 = DataLoader(meta_training_data_1,batch_size=batch_size,shuffle=True,num_workers=0)
-	meta_train_loader_2 = DataLoader(meta_training_data_2,batch_size=batch_size,shuffle=True,num_workers=0)
-	meta_train_loader_3 = DataLoader(meta_training_data_3,batch_size=batch_size,shuffle=True,num_workers=0)
-	meta_train_loader_4 = DataLoader(meta_training_data_4,batch_size=batch_size,shuffle=True,num_workers=0)
-	meta_train_loader_5 = DataLoader(meta_training_data_5,batch_size=batch_size,shuffle=True,num_workers=0)
+	# meta_train_loader_1 = DataLoader(meta_training_data_1,batch_size=batch_size,shuffle=True,num_workers=0)
+	# meta_train_loader_2 = DataLoader(meta_training_data_2,batch_size=batch_size,shuffle=True,num_workers=0)
+	# meta_train_loader_3 = DataLoader(meta_training_data_3,batch_size=batch_size,shuffle=True,num_workers=0)
+	# meta_train_loader_4 = DataLoader(meta_training_data_4,batch_size=batch_size,shuffle=True,num_workers=0)
+	# meta_train_loader_5 = DataLoader(meta_training_data_5,batch_size=batch_size,shuffle=True,num_workers=0)
 
 	reg_train_loader = DataLoader(reg_training_data,batch_size=batch_size,shuffle=True,num_workers=0)
 	
 	dae = Denoise(ae_model,train_lr,meta_lr)
 
 	# Normal training with one SNR
-	# for i in range(num_epochs):
+	for i in range(num_epochs):
 
-	# 	loss = dae.train_normal(data_full_noisy,data_full_clean)
-		
-	# 	print('epoch [{}/{}], MSE_loss:{:.4f}'
-	# 	  .format(i + 1, num_epochs, loss))
+		total_loss = 0
+		for i,batch in enumerate(reg_train_loader):
+
+			clean = batch['clean_mag']
+			noise = batch['noise_mag']
+
+			print(clean.shape)
+			print(noise.shape)
+
+			loss = dae.train_normal(clean,noise)
+
+			total_loss += loss
+			
+		print('epoch [{}/{}], MSE_loss:{:.4f}'.format(i + 1, num_epochs, total_loss))
+		plt.plot(i+1, total_loss)
 
 
 	#Meta-training with five SNR
-	dae.train_maml(meta_train_noisy,meta_train_clean,train_datapts,meta_train_datapts,num_iter)
+	# dae.train_maml(meta_train_noisy,meta_train_clean,train_datapts,meta_train_datapts,num_iter)
 
 
 
