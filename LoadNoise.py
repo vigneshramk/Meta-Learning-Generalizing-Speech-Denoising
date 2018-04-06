@@ -68,8 +68,8 @@ class LoadData(Dataset):
 
         #creating the spectogram tensor that depends on how many SNR levels to add 
         flatten_length = (self.n_fft/2 + 1) * self.frame_size
-        flatten_noise_spectograms = np.zeros((flatten_length, len(self.snr)))
-        flatten_clean_spectograms = np.zeros((flatten_length, len(self.snr)))
+        flatten_noise_spectograms = np.zeros((int(flatten_length), len(self.snr)))
+        flatten_clean_spectograms = np.zeros((int(flatten_length), len(self.snr)))
 
         #loop through SNR array 
         for s in range(len(self.snr)):

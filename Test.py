@@ -21,8 +21,8 @@ from torch.utils.data import DataLoader
 #the tsv_file in regular training file has all noise types together
 
 #same tsv_file since we are telling it what noise/snr to add 
-meta_training_data = LoadData(tsv_file='dataset/meta_data/train/train.txt', clean_dir='/Users/tylervgina/DataSets/LDC93S1/TIMITcorpus/TIMIT/TRAIN/',SNR=[-6,-3,0,3,6],noise='babble')
-reg_training_data = LoadData(tsv_file='dataset/meta_data/train/train.txt', clean_dir='/Users/tylervgina/DataSets/LDC93S1/TIMITcorpus/TIMIT/TRAIN/',SNR=[6],noise='babble')
+meta_training_data = LoadData(tsv_file='dataset/meta_data/train/train.txt', clean_dir='TIMIT/TRAIN/',SNR=[-6,-3,0,3,6],noise='babble')
+reg_training_data = LoadData(tsv_file='dataset/meta_data/train/train.txt', clean_dir='TIMIT/TRAIN/',SNR=[6],noise='babble')
 
 #dataloaders
 meta_train_loader = DataLoader(meta_training_data,batch_size=128,shuffle=True,num_workers=0)
