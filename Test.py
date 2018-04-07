@@ -29,16 +29,44 @@ parser.add_argument('--data_path', type=str,
 #same tsv_file since we are telling it what noise/snr to add 
 args = parser.parse_args()
 data_path = args.data_path
-meta_training_data = LoadData(tsv_file='dataset/meta_data/train/train.txt', clean_dir=data_path,SNR=[-6,-3,0,3,6],noise='babble')
+noise_snr =[-6,-3,0,3,6] 
+meta_training_data = LoadData(tsv_file='dataset/meta_data/train/train.txt', clean_dir=data_path,SNR=noise_snr,noise='babble')
 reg_training_data = LoadData(tsv_file='dataset/meta_data/train/train.txt', clean_dir=data_path,SNR=[6],noise='babble')
 
 #dataloaders
-meta_train_loader = DataLoader(meta_training_data,batch_size=1,shuffle=True,num_workers=0)
+#4610
+meta_train_loader = DataLoader(meta_training_data,batch_size=4610,shuffle=True,num_workers=0)
 reg_train_loader = DataLoader(reg_training_data,batch_size=1,shuffle=True,num_workers=0) 
 
 #looping through the dataloader. Pytorch dataloader automatically randomizes the batches and gives u a new batch each iteration
+
 for i,batch in enumerate(meta_train_loader):
-    print(i)
+    print('creating data....')
+    clean = batch['clean_mag']
+    noise = batch['noise_mag']
+
+    print(clean.shape)
+    print(noise.shape)
+    break
+    
+print('done...')
+print(clean[:,:,:,0].shape)
+np.save('spectograms/clean/train/clean_single'  + '.npy', clean[:,:,:,0])
+for s, snr in enumerate(noise_snr):
+    print(snr)
+    print(noise[:,:,:,s].shape)
+    np.save('spectograms/noise/train/noise_'+ str(snr) + '.npy', noise[:,:,:,s])
+    
+#saves each file as (Num_audiofiles,spect_per_audio,feature_dimensions * num_frames)
+#should be one for each noise type
+#only one for clean
+
+
+
+
+
+
+
    
     
     

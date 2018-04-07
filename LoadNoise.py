@@ -76,6 +76,7 @@ class LoadData(Dataset):
     
     
     def __getitem__(self, idx):
+        print(idx)
 
         #Read Audio File
         
@@ -172,11 +173,10 @@ class LoadData(Dataset):
                 #add the same clean flatten spectograms for each dimension
                 flatten_noise_spectograms[num][:,s] = flatten_magN
 
-        np.save('spectograms/noise/multiple_noise/noise_' + str(idx) + '.npy', flatten_noise_spectograms)
-        np.save('spectograms/clean/single_frame/clean_' + str(idx) + '.npy', flatten_clean_spectograms)
+        #np.save('spectograms/noise/multiple_noise/noise_' + str(idx) + '.npy', flatten_noise_spectograms)
+        #np.save('spectograms/clean/single_frame/clean_' + str(idx) + '.npy', flatten_clean_spectograms)
 
-        print(flatten_clean_spectograms.shape)
-        print(flatten_noise_spectograms.shape)
+        
 
         #Return shortened clean and noise spectogram pairs 
         sample = {'clean_mag': flatten_clean_spectograms, 'noise_mag': flatten_noise_spectograms}
