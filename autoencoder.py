@@ -252,23 +252,13 @@ def main(args):
 	meta_train_noisy = np.random.rand(num_samples,num_features,num_tasks)
 	meta_train_clean = np.random.rand(num_samples,num_features,num_tasks)
 
-<<<<<<< HEAD
-	"""
-	#one data loader for each SNR
-	meta_training_data_1 = LoadData(tsv_file=meta_training_file, clean_dir=clean_dir,frame_size = frame_size,SNR=-6,noise=noise_type)
-	meta_training_data_2 = LoadData(tsv_file=meta_training_file, clean_dir=clean_dir,frame_size = frame_size,SNR=-3,noise=noise_type)
-	meta_training_data_3 = LoadData(tsv_file=meta_training_file, clean_dir=clean_dir,frame_size = frame_size,SNR=0,noise=noise_type)
-	meta_training_data_4 = LoadData(tsv_file=meta_training_file, clean_dir=clean_dir,frame_size = frame_size,SNR=3,noise=noise_type)
-	meta_training_data_5 = LoadData(tsv_file=meta_training_file, clean_dir=clean_dir,frame_size = frame_size,SNR=6,noise=noise_type)
-=======
-	
+
 	# #one data loader for each SNR
 	# meta_training_data_1 = LoadData(tsv_file=meta_training_file, clean_dir=clean_dir,frame_size = frame_size,SNR=-6,noise=noise_type)
 	# meta_training_data_2 = LoadData(tsv_file=meta_training_file, clean_dir=clean_dir,frame_size = frame_size,SNR=-3,noise=noise_type)
 	# meta_training_data_3 = LoadData(tsv_file=meta_training_file, clean_dir=clean_dir,frame_size = frame_size,SNR=0,noise=noise_type)
 	# meta_training_data_4 = LoadData(tsv_file=meta_training_file, clean_dir=clean_dir,frame_size = frame_size,SNR=3,noise=noise_type)
 	# meta_training_data_5 = LoadData(tsv_file=meta_training_file, clean_dir=clean_dir,frame_size = frame_size,SNR=6,noise=noise_type)
->>>>>>> 4bdb3c641d42fd5d7458a4dab3b8294f9ad57d09
 
 	reg_training_data = LoadData(tsv_file=reg_training_file,clean_dir=clean_dir,frame_size = frame_size,noise=noise_type)
 

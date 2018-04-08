@@ -113,7 +113,7 @@ class LoadData(Dataset):
         flatten_noise_spectograms = np.zeros((self.num_spectograms, int(flatten_length), len(self.snr)))
 
         if self.single_frame:
-            flatten_clean_spectograms = np.zeros((self.num_spectograms, (self.n_fft/2+1) , len(self.snr)))
+            flatten_clean_spectograms = np.zeros((self.num_spectograms, int(self.n_fft/2+1) , len(self.snr)))
 
         else:
             flatten_clean_spectograms = np.zeros((self.num_spectograms, int(flatten_length), len(self.snr)))

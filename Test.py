@@ -6,7 +6,7 @@ import argparse
 
 parser = argparse.ArgumentParser()
 parser.add_argument('--data_path', type=str,
-						default='/Users/tylervgina/DataSets/LDC93S1/TIMITcorpus/TIMIT/TRAIN', help="path for the data")
+						default='TIMIT/TRAIN', help="path for the data")
 
 
 #JUST TO TEST THINGS OUT
