@@ -26,6 +26,23 @@ def np_to_variable(x, requires_grad=False, dtype=torch.FloatTensor):
 #ALL   3 frames each
 
 #we should try just regular fully connected layers like spectral mapping
+class Auto(nn.Module):
+	def __init__(self, input_size, output_size):
+		super(Auto, self).__init__()
+		self.hidden_size = 1500
+		self.hidden2_size = 750
+
+		self.classifier = nn.Sequential(
+						  nn.Linear(input_size, self.hidden_size),
+						  nn.ReLU(inplace=True),
+						  nn.Linear(self.hidden_size, self.hidden2_size),
+						  nn.ReLU(inplace=True),
+						  nn.Linear(self.hidden2_size, output_size))
+
+	def forward(self, x):
+		x = self.classifier(x)
+		return x
+
 class Autoencoder(nn.Module):
 	def __init__(self, input_size,hidden_size):
 		super(Autoencoder, self).__init__()
@@ -56,11 +73,11 @@ class Denoise():
 		curr_model = {'state_dict': self.model.state_dict()}
 		
 		# if(mode is 'train'):
-		# 	curr_model = {'state_dict': self.model.state_dict()}
-		# 				   # 'optimizer': self.optimizer.state_dict()}
+		#   curr_model = {'state_dict': self.model.state_dict()}
+		#                  # 'optimizer': self.optimizer.state_dict()}
 		# elif(mode is 'meta'):
-		# 	curr_model = {'state_dict': self.model.state_dict()}
-		# 				   # 'optimizer': self.meta_optimizer.state_dict()}
+		#   curr_model = {'state_dict': self.model.state_dict()}
+		#                  # 'optimizer': self.meta_optimizer.state_dict()}
 		return curr_model
 	
 	def set_weights(self,curr_model):
@@ -68,18 +85,21 @@ class Denoise():
 		self.model.load_state_dict(curr_model['state_dict'])
 
 		# if(mode is 'train'):
-		# 	self.model.load_state_dict(curr_model['state_dict'])
-		# 	# self.optimizer.load_state_dict(curr_model['optimizer'])
+		#   self.model.load_state_dict(curr_model['state_dict'])
+		#   # self.optimizer.load_state_dict(curr_model['optimizer'])
 		# elif(mode is 'meta'):
-		# 	self.model.load_state_dict(curr_model['state_dict'])
-		# 	# self.meta_optimizer.load_state_dict(curr_model['optimizer'])
+		#   self.model.load_state_dict(curr_model['state_dict'])
+		#   # self.meta_optimizer.load_state_dict(curr_model['optimizer'])
 		
 	def train_normal(self,noisy,clean):
 
-		noisy = torch.autograd.Variable(noisy,requires_grad=True)
-		clean = torch.autograd.Variable(clean)
+		noisy = np_to_variable(noisy,requires_grad=True)
+		clean = np_to_variable(clean)
+
+		output = self.model(noisy)
+
 		
-		self.loss = self.criterion(noisy, clean)
+		self.loss = self.criterion(output, clean)
 		self.optimizer.zero_grad()
 		self.loss.backward()
 		self.optimizer.step()
@@ -132,7 +152,7 @@ class Denoise():
 
 
 			# Theta parameter update --- Meta-training mode
-			combined_loss = 0	
+			combined_loss = 0   
 			for t in range(num_tasks):
 
 				#Sample K datapoints from the task t
@@ -168,7 +188,7 @@ def parse_arguments():
 	parser.add_argument('--num-epochs', dest='num_epochs', type=int,
 						default=1000, help="Number of epochs to train on.")
 	parser.add_argument('--train_lr', dest='train_lr', type=float,
-						default=1e-4, help="The training learning rate.")
+						default=1e-5, help="The training learning rate.")
 	parser.add_argument('--meta_lr', dest='meta_lr', type=float,
 						default=1e-4, help="The meta-training learning rate.")
 	parser.add_argument('--batch_size', type=int,
@@ -238,20 +258,16 @@ def main(args):
 
 	num_iter = 10000
 
-	ae_model = Autoencoder(num_features, hidden_size)
+	ae_model = Auto(1771, 161)
 	if torch.cuda.is_available():
 		ae_model.cuda()
 
 	ae_model.train()
 
-	# Do the data loading here with the given matrix sizes
-	data_full_noisy = np.random.rand(num_samples,num_features)
-	data_full_clean = np.random.rand(num_samples,num_features)
-
-	# Sample meta train clean and noisy tasks
-	meta_train_noisy = np.random.rand(num_samples,num_features,num_tasks)
-	meta_train_clean = np.random.rand(num_samples,num_features,num_tasks)
-
+	# Create plot
+	fig1 = plt.figure()
+	ax1 = fig1.gca()
+	ax1.set_title('Loss vs Epochs')
 
 	# #one data loader for each SNR
 	# meta_training_data_1 = LoadData(tsv_file=meta_training_file, clean_dir=clean_dir,frame_size = frame_size,SNR=-6,noise=noise_type)
@@ -260,7 +276,7 @@ def main(args):
 	# meta_training_data_4 = LoadData(tsv_file=meta_training_file, clean_dir=clean_dir,frame_size = frame_size,SNR=3,noise=noise_type)
 	# meta_training_data_5 = LoadData(tsv_file=meta_training_file, clean_dir=clean_dir,frame_size = frame_size,SNR=6,noise=noise_type)
 
-	reg_training_data = LoadData(tsv_file=reg_training_file,clean_dir=clean_dir,frame_size = frame_size,noise=noise_type)
+	# reg_training_data = LoadData(tsv_file=reg_training_file,clean_dir=clean_dir,frame_size = frame_size,noise=noise_type)
 
 	# #ACTUAL DATA LOADERS for each meta/reg
 
@@ -270,30 +286,45 @@ def main(args):
 	# meta_train_loader_4 = DataLoader(meta_training_data_4,batch_size=batch_size,shuffle=True,num_workers=0)
 	# meta_train_loader_5 = DataLoader(meta_training_data_5,batch_size=batch_size,shuffle=True,num_workers=0)
 
-	reg_train_loader = DataLoader(reg_training_data,batch_size=batch_size,shuffle=True,num_workers=0)
-	"""
+	# reg_train_loader = DataLoader(reg_training_data,batch_size=batch_size,shuffle=True,num_workers=0)
+	
+	noisy_data = np.load('spectograms/noise/train/noise_6.npy')
+	clean_data = np.load('spectograms/clean/train/clean_single.npy')
 
-    
+	noisy_sq = np.reshape(noisy_data,[noisy_data.shape[0]*noisy_data.shape[1],noisy_data.shape[2]])
+	clean_sq = np.reshape(clean_data,[noisy_data.shape[0]*clean_data.shape[1],clean_data.shape[2]])
+
+	print(noisy_sq.shape)
+	
 	dae = Denoise(ae_model,train_lr,meta_lr)
 
+	path_name = './figures/train_plots'
+	str_path1 = 'training_loss.png'
+	plot1_name = os.path.join(path_name,str_path1)
+
+	if not os.path.exists(path_name):
+		os.makedirs(path_name)
+
 	# Normal training with one SNR
-	for i in range(num_epochs):
+	num_samples = int(noisy_sq.shape[0])
+	for j in range(num_epochs):
 
 		total_loss = 0
-		for i,batch in enumerate(reg_train_loader):
+		step = 100
+		for i in range(0,num_samples,step):
+			clean = clean_sq[i:i+step,:]
+			noise = noisy_sq[i:i+step,:]
 
-			clean = batch['clean_mag']
-			noise = batch['noise_mag']
+			loss = dae.train_normal(noise,clean)
 
-			print(clean.shape)
-			print(noise.shape)
-
-			loss = dae.train_normal(clean,noise)
+			# print("Batch - %s : %s , Loss - %1.4f" %(i, i+step,loss))
 
 			total_loss += loss
 			
-		print('epoch [{}/{}], MSE_loss:{:.4f}'.format(i + 1, num_epochs, total_loss))
-		plt.plot(i+1, total_loss)
+		print('epoch [{}/{}], MSE_loss:{:.4f}'.format(j + 1, num_epochs, total_loss))
+		ax1.scatter(j+1, total_loss)
+		if j%100 == 0:
+			ax1.figure.savefig(plot1_name)
 
 
 	#Meta-training with five SNR
