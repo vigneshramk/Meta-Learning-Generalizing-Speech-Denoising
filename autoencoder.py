@@ -26,18 +26,25 @@ def np_to_variable(x, requires_grad=False, dtype=torch.FloatTensor):
 #ALL   3 frames each
 
 #we should try just regular fully connected layers like spectral mapping
+#paper - https://ieeexplore.ieee.org/stamp/stamp.jsp?tp=&arnumber=7067387
+#they do it with log magnitude, and they normalize the data
+
 class Auto(nn.Module):
 	def __init__(self, input_size, output_size):
 		super(Auto, self).__init__()
-		self.hidden_size = 1500
-		self.hidden2_size = 750
-
+		self.hidden_size = 1600
+		#self.hidden2_size = 750
+        #change it to what the paper had. 3 hidden layers 1600
+        #but they normlized data and use log magnitude. 
+        #got the perfect hidden size and units by cross validation
 		self.classifier = nn.Sequential(
 						  nn.Linear(input_size, self.hidden_size),
 						  nn.ReLU(inplace=True),
-						  nn.Linear(self.hidden_size, self.hidden2_size),
+						  nn.Linear(self.hidden_size, self.hidden_size),
 						  nn.ReLU(inplace=True),
-						  nn.Linear(self.hidden2_size, output_size))
+                          nn.Linear(self.hidden_size, self.hidden_size),
+                          nn.ReLU(inplace=True),
+						  nn.Linear(self.hidden_size, output_size))
 
 	def forward(self, x):
 		x = self.classifier(x)

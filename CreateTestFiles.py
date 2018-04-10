@@ -30,7 +30,7 @@ with open('dataset/meta_data/test/test.txt') as tsv:
         total.append(line)
 
 for idx, line in enumerate(total):
-    print( )
+    print( idx)
     file_name = line[0]
     file_path = os.path.join(data_path, file_name)
 
@@ -50,6 +50,7 @@ for idx, line in enumerate(total):
     if not os.path.exists(save_directory_noise):
         os.makedirs(save_directory_noise)
     np.save(save_directory_noise + 'spect_clean.npy', magC)
+    print(clean_spect.shape)
 
     for snr in noise_snr:
 

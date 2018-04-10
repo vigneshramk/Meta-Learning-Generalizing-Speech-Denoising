@@ -47,7 +47,7 @@ class GRU(nn.Module):
 """
 
 class LoadData(Dataset):
-    def __init__(self, tsv_file, clean_dir, features=None, num_spectograms=3,single_frame=True,
+    def __init__(self, tsv_file, clean_dir, features=None, num_spectograms=10,single_frame=True,
                     hop_size=160, n_fft=320, fs=16000,frame_size=11, SNR=None, noise=None):
 
         #Add each line to a list
