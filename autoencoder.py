@@ -338,7 +338,7 @@ def main(args):
 			clean = clean_sq[i:i+step,:]
 			noise = noisy_sq[i:i+step,:]
 
-			loss = dae.train_normal(noise,clean,j,i,model_path)
+			loss = dae.train_normal(noise,clean,j+1,i,model_path)
 
 			# print("Batch - %s : %s , Loss - %1.4f" %(i, i+step,loss))
 
