@@ -3,7 +3,7 @@ from LoadNoise import LoadData
 import numpy as np
 from torch.utils.data import DataLoader
 import argparse
-
+import os
 parser = argparse.ArgumentParser()
 parser.add_argument('--data_path', type=str,
 						default='TIMIT/TRAIN', help="path for the data")
@@ -38,6 +38,15 @@ reg_training_data = LoadData(tsv_file='dataset/meta_data/train/train.txt', clean
 meta_train_loader = DataLoader(meta_training_data,batch_size=4610,shuffle=True,num_workers=0)
 reg_train_loader = DataLoader(reg_training_data,batch_size=1,shuffle=True,num_workers=0) 
 
+path1_name = './spectograms_train/noise/train'
+if not os.path.exists(path1_name):
+        os.makedirs(path1_name)
+
+path2_name = './spectograms_train/clean/train'
+if not os.path.exists(path2_name):
+        os.makedirs(path2_name)
+
+
 #looping through the dataloader. Pytorch dataloader automatically randomizes the batches and gives u a new batch each iteration
 
 for i,batch in enumerate(meta_train_loader):
@@ -51,11 +60,11 @@ for i,batch in enumerate(meta_train_loader):
     
 print('done...')
 print(clean[:,:,:,0].shape)
-np.save('spectograms/clean/train/clean_single'  + '.npy', clean[:,:,:,0])
+np.save('spectograms_train/clean/train/clean_single'  + '.npy', clean[:,:,:,0])
 for s, snr in enumerate(noise_snr):
     print(snr)
     print(noise[:,:,:,s].shape)
-    np.save('spectograms/noise/train/noise_'+ str(snr) + '.npy', noise[:,:,:,s])
+    np.save('spectograms_train/noise/train/noise_'+ str(snr) + '.npy', noise[:,:,:,s])
     
 #saves each file as (Num_audiofiles,spect_per_audio,feature_dimensions * num_frames)
 #should be one for each noise type
