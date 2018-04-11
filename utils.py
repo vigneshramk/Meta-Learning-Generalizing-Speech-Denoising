@@ -39,3 +39,10 @@ def add_noise(x,n,snr=None):
     ne = nn.dot(nn) # noise power
     nscale = np.sqrt(xe/(10**(snr/10.)) /ne) # scaling factor
     return x + nscale*nn
+
+
+def reconstruct_clean(noise_audio, approx_clean_spect):
+    # use the noise audio to get the phase, and the missing frames
+    # attach the missing noise frames
+    # istft to reconstruct 
+    return
