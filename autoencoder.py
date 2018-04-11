@@ -98,7 +98,7 @@ class Denoise():
 		#   self.model.load_state_dict(curr_model['state_dict'])
 		#   # self.meta_optimizer.load_state_dict(curr_model['optimizer'])
 		
-	def train_normal(self,noisy,clean):
+	def train_normal(self,noisy,clean,j,i,model_path):
 
 		noisy = np_to_variable(noisy,requires_grad=True)
 		clean = np_to_variable(clean)
@@ -110,6 +110,17 @@ class Denoise():
 		self.optimizer.zero_grad()
 		self.loss.backward()
 		self.optimizer.step()
+
+		if j%100==0 and i==0:
+
+			state = {
+			    'epoch': j,
+			    'state_dict': self.model.state_dict(),
+			    'optimizer': self.optimizer.state_dict(),
+			}
+			str_path = model_path + '/model_epoch' + str(j) + '.h5'
+			torch.save(state,str_path)
+			print("Saving the model")
 
 		return self.loss.data[0]
 
@@ -295,8 +306,8 @@ def main(args):
 
 	# reg_train_loader = DataLoader(reg_training_data,batch_size=batch_size,shuffle=True,num_workers=0)
 	
-	noisy_data = np.load('spectograms/noise/train/noise_6.npy')
-	clean_data = np.load('spectograms/clean/train/clean_single.npy')
+	noisy_data = np.load('spectograms_train/noise/train/noise_-6.npy')
+	clean_data = np.load('spectograms_train/clean/train/clean_single.npy')
 
 	noisy_sq = np.reshape(noisy_data,[noisy_data.shape[0]*noisy_data.shape[1],noisy_data.shape[2]])
 	clean_sq = np.reshape(clean_data,[noisy_data.shape[0]*clean_data.shape[1],clean_data.shape[2]])
@@ -306,23 +317,28 @@ def main(args):
 	dae = Denoise(ae_model,train_lr,meta_lr)
 
 	path_name = './figures/train_plots'
-	str_path1 = 'training_loss.png'
+	str_path1 = 'training_loss_-6dB.png'
 	plot1_name = os.path.join(path_name,str_path1)
+
+	model_path = 'models/normal_train/noise_-6db'
 
 	if not os.path.exists(path_name):
 		os.makedirs(path_name)
+
+	if not os.path.exists(model_path):
+		os.makedirs(model_path)
 
 	# Normal training with one SNR
 	num_samples = int(noisy_sq.shape[0])
 	for j in range(num_epochs):
 
 		total_loss = 0
-		step = 100
+		step = 500
 		for i in range(0,num_samples,step):
 			clean = clean_sq[i:i+step,:]
 			noise = noisy_sq[i:i+step,:]
 
-			loss = dae.train_normal(noise,clean)
+			loss = dae.train_normal(noise,clean,j,i,model_path)
 
 			# print("Batch - %s : %s , Loss - %1.4f" %(i, i+step,loss))
 
@@ -332,6 +348,8 @@ def main(args):
 		ax1.scatter(j+1, total_loss)
 		if j%100 == 0:
 			ax1.figure.savefig(plot1_name)
+
+
 
 
 	#Meta-training with five SNR
