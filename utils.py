@@ -1,5 +1,6 @@
 import numpy as np
 import numpy.random as rand
+import librosa
 
 def sample(x, length, num, verbose=False):
     """
@@ -41,8 +42,22 @@ def add_noise(x,n,snr=None):
     return x + nscale*nn
 
 
-def reconstruct_clean(noise_audio, approx_clean_spect):
+def reconstruct_clean(noise_audio, approx_clean_mag,frame_window=5):
     # use the noise audio to get the phase, and the missing frames
     # attach the missing noise frames
     # istft to reconstruct 
-    return
+    noise_spect = librosa.stft(noise_audio, 320, 160)
+    magN, phaseN = librosa.magphase(noise_spect)
+
+    print(magN.shape)
+    print(approx_clean_mag.shape)
+
+    if magN.shape != approx_clean_mag.shape:
+        print('Size not same. add noise frames')
+        approx_clean_mag = np.hstack((magN[:,0:frame_window],approx_clean_mag, magN[:,-1*frame_window:] ))
+    
+    print(approx_clean_mag.shape)
+    print(magN.shape)
+    approx_clean_audio = librosa.core.istft(approx_clean_mag*phaseN,hop_length=160)
+    
+    return approx_clean_audio
