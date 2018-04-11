@@ -173,8 +173,8 @@ class LoadData(Dataset):
                 #add the same clean flatten spectograms for each dimension
                 flatten_noise_spectograms[num][:,s] = flatten_magN
 
-        #np.save('spectograms/noise/multiple_noise/noise_' + str(idx) + '.npy', flatten_noise_spectograms)
-        #np.save('spectograms/clean/single_frame/clean_' + str(idx) + '.npy', flatten_clean_spectograms)
+        # np.save('spectograms/noise/multiple_noise/noise_' + str(idx) + '.npy', flatten_noise_spectograms)
+        # np.save('spectograms/clean/single_frame/clean_' + str(idx) + '.npy', flatten_clean_spectograms)
 
         
 
