@@ -306,13 +306,33 @@ def main(args):
 
 	# reg_train_loader = DataLoader(reg_training_data,batch_size=batch_size,shuffle=True,num_workers=0)
 	
-	noisy_data = np.load('spectograms_train/noise/train/noise_-6.npy')
-	clean_data = np.load('spectograms_train/clean/train/clean_single.npy')
+	noisy_data1 = np.load('spectograms_train/noise/train/noise_-6.npy')
+	noisy_data2 = np.load('spectograms_train/noise/train/noise_-3.npy')
+	noisy_data3 = np.load('spectograms_train/noise/train/noise_0.npy')
+	noisy_data4 = np.load('spectograms_train/noise/train/noise_3.npy')
+	noisy_data5 = np.load('spectograms_train/noise/train/noise_6.npy')
 
-	noisy_sq = np.reshape(noisy_data,[noisy_data.shape[0]*noisy_data.shape[1],noisy_data.shape[2]])
+	noisy_sq1 = np.reshape(noisy_data1,[noisy_data1.shape[0]*noisy_data1.shape[1],noisy_data1.shape[2]])
+	noisy_sq2 = np.reshape(noisy_data2,[noisy_data2.shape[0]*noisy_data2.shape[1],noisy_data2.shape[2]])
+	noisy_sq3 = np.reshape(noisy_data3,[noisy_data3.shape[0]*noisy_data3.shape[1],noisy_data3.shape[2]])
+	noisy_sq4 = np.reshape(noisy_data4,[noisy_data4.shape[0]*noisy_data4.shape[1],noisy_data4.shape[2]])
+	noisy_sq5 = np.reshape(noisy_data5,[noisy_data5.shape[0]*noisy_data5.shape[1],noisy_data5.shape[2]])
+
+	noisy_total = []
+
+	noisy_total.append(noisy_sq1)
+	noisy_total.append(noisy_sq2)
+	noisy_total.append(noisy_sq3)
+	noisy_total.append(noisy_sq4)
+	noisy_total.append(noisy_sq5)
+
+	noisy_total = np.reshape(noisy_total,[noisy_total.shape[0]*noisy_total.shape[1],noisy_total.shape[2]])
+	np.random.shuffle(noisy_total)
+
+	clean_data = np.load('spectograms_train/clean/train/clean_single.npy')
 	clean_sq = np.reshape(clean_data,[noisy_data.shape[0]*clean_data.shape[1],clean_data.shape[2]])
 
-	print(noisy_sq.shape)
+	print(noisy_total.shape)
 	
 	dae = Denoise(ae_model,train_lr,meta_lr)
 
@@ -329,14 +349,14 @@ def main(args):
 		os.makedirs(model_path)
 
 	# Normal training with one SNR
-	num_samples = int(noisy_sq.shape[0])
+	num_samples = int(noisy_total.shape[0])
 	for j in range(num_epochs):
 
 		total_loss = 0
 		step = 500
 		for i in range(0,num_samples,step):
 			clean = clean_sq[i:i+step,:]
-			noise = noisy_sq[i:i+step,:]
+			noise = noisy_total[i:i+step,:]
 
 			loss = dae.train_normal(noise,clean,j+1,i,model_path)
 
