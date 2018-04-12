@@ -10,6 +10,7 @@ import torch.nn as nn
 import torch.nn.functional as F
 import torch.optim as optim
 import autoencoder
+import PESQScore
 
 parser = argparse.ArgumentParser()
 parser.add_argument('--test_directory', type=str,
@@ -101,11 +102,8 @@ for idx in range(total_test):
     [clean_audio,fs] = librosa.load(full_audio_clean_name,16000)
     [noise_audio,fs] = librosa.load(full_audio_noise_name,16000)
 
-    #PASS NOISE_MAG into function that returns APPROX_CLEAN_MAG and MMSE
-
-    ###some function ri2ght here
-  
-
+    approx_clean_audio, mse = test(model, clean_audio, noise_audio)
+    
     ### WOULD PASS THROUGH approx_clean_mag into reconstruct.
     ### RETURNS Approx_clean_audio
     ### this is just for testing
@@ -119,6 +117,9 @@ for idx in range(total_test):
             f.write(full_audio_clean_name + '\t' + full_audio_noise_name + '\n')
             f.write(full_audio_clean_name + '\t' + approx_clean_name + '\n' )
 
+    # logging the scores
+    PESQ[idx] = PESQScore.pesq(approx_clean_name, full_audio_noise_name, fs)
+    MSE[idx] = mse
 
     if idx == 3:
         break
@@ -128,6 +129,17 @@ for idx in range(total_test):
     
 
   
+def test(model, clean_audio, noise_audio):
+    magSz, totalTime = noise_audio.shape
+    specWidth = window_size*2+1
+    inputSz = magSz * specWidth
+    batch = np.zeros(totalTime-window_size*2, inputSz)
+    for idx in range(totalTime-window_size*2):
+        batch[idx, :] = np.reshape(noise_audio[:, idx:idx+window_size*2],1)
+    batch_tensor = autoencoder.np_to_variable(batch)
+    reconstruct = model(batch_tensor).numpy().T
+    mse = ((reconstruct - clean_audio[:,window_size:totalTime-window_size]) ** 2).mean(axis=None)
+    return reconstruct, mse
 
 
 
