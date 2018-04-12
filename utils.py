@@ -52,7 +52,6 @@ def reconstruct_clean(noise_audio, approx_clean_mag,frame_window=5):
     if magN.shape != approx_clean_mag.shape:
         print('Size not same. add noise frames')
         approx_clean_mag = np.hstack((magN[:,0:frame_window],approx_clean_mag, magN[:,-1*frame_window:] ))
-    
-    approx_clean_audio = librosa.core.istft(approx_clean_mag*phaseN,hop_length=160)
-    
+        
+    approx_clean_audio = librosa.istft(approx_clean_mag*phaseN,hop_length=160)
     return approx_clean_audio

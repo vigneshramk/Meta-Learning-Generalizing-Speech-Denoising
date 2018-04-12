@@ -12,7 +12,12 @@ import torch.optim as optim
 import autoencoder
 import PESQScore
 import time
+#mask = gru(noise_mag)
+		#print(mask.size())
 
+		#approx_mag = noise_mag * mask
+
+		#loss = F.mse_loss(approxMag,magSpect)
 
 parser = argparse.ArgumentParser()
 parser.add_argument('--test_directory', type=str,
@@ -73,6 +78,7 @@ state_dict = torch.load(model_load_path, map_location=lambda storage, loc: stora
 model.load_state_dict(state_dict['state_dict'])
 
 def test(model, clean, noise):
+    criterion = nn.MSELoss()
     magSz, totalTime = noise.shape
     specWidth = window_size*2+1
     inputSz = magSz * specWidth
@@ -80,8 +86,10 @@ def test(model, clean, noise):
     for idx in range(totalTime-window_size*2):
         batch[idx, :] = noise[:, idx:idx+specWidth].flatten()
     batch_tensor = autoencoder.np_to_variable(batch)
-    reconstruct = model(batch_tensor).data.numpy().T
-    mse = ((reconstruct - clean[:,window_size:-1*window_size]) ** 2).mean(axis=None)
+    reconstruct = model(batch_tensor).data.cpu().numpy().T
+    loss = criterion(autoencoder.np_to_variable(reconstruct),autoencoder.np_to_variable(clean[:,window_size:-1*window_size]))
+    mse = loss.data[0]
+    #mse = ((reconstruct - clean[:,window_size:-1*window_size]) ** 2).mean(axis=None)
     return reconstruct, mse
 
 if torch.cuda.is_available():
@@ -109,6 +117,7 @@ for idx in range(total_test):
     clean_mag = np.load(test_file_path + clean_spect_name)
     noise_mag = np.load(test_file_path + noise_spect_name)
 
+
     #Get the actual clean audio and noise audio
     full_audio_clean_name = test_file_path + audio_clean_name
     full_audio_noise_name = test_file_path + audio_noise_name
@@ -116,48 +125,70 @@ for idx in range(total_test):
     #print(full_audio_noise_name)
     [clean_audio,fs] = librosa.load(full_audio_clean_name,16000)
     [noise_audio,fs] = librosa.load(full_audio_noise_name,16000)
+"""
+    clean_spect = librosa.stft(clean_audio,n_fft=320,hop_length=160)
+    magC,phaseC =  librosa.magphase(clean_spect)
+    clean_audio_new = librosa.istft(magC*phaseC,hop_length=160)
 
+    noise_spect = librosa.stft(noise_audio,n_fft=320,hop_length=160)
+    magN,phaseN = librosa.magphase(noise_spect)
+    noise_audio_new = librosa.istft(magN*phaseN,hop_length=160)
+    print(clean_audio_new.shape)
+    print(noise_audio_new.shape)
+    print('new audio sizes')
+"""    
     approx_clean_mag, mse = test(model, clean_mag, noise_mag)
-    print(mse)
     
     ### WOULD PASS THROUGH approx_clean_mag into reconstruct.
     ### RETURNS Approx_clean_audio
     ### this is just for testing
     approx_clean_audio = utils.reconstruct_clean(noise_audio, approx_clean_mag)
     approx_clean_name =test_file_path + 'approx_clean_' + noise_snr + '_' + exp_name + '.WAV'
+    print('approx clean audio length') 
+    print(approx_clean_audio.shape)
     if save_audio:
         print('saving audio...')
         wavfile.write(approx_clean_name, 16000,approx_clean_audio)
+   #     wavfile.write(full_audio_clean_name,16000,clean_audio_new)
+   #     wavfile.write(full_audio_noise_name,16000,noise_audio_new)
         #np.save(test_file_path + 'approx_clean_mag_' + noise_snr + '_' + exp_name + '.npy', approx_clean_mag)
         with open(test_load_path + noise_snr + '_' + exp_name + '.txt','a') as f:
             f.write(full_audio_clean_name + '\t' + full_audio_noise_name + '\n')
             f.write(full_audio_clean_name + '\t' + approx_clean_name + '\n' )
-    """
+    """ 
     # logging the scores
-    time.sleep(5)
+    time.sleep(10)
     print('PESQ Scores')
-    pesq_approx = PESQScore.pesq('../../../' + full_audio_clean_name, '../../../' +  approx_clean_name,16000)
-    pesq_noise =PESQScore.pesq('../../../' + full_audio_clean_name, '../../../' + full_audio_noise_name, 16000)
+    [clean,fs] = librosa.load(full_audio_clean_name,16000)
+    [approx,fs] = librosa.load(approx_clean_name,16000)
+    print(clean.shape)
+    print(approx.shape)
+    pesq_approx = PESQScore.pesq(full_audio_clean_name,approx_clean_name,16000)
+    pesq_noise =PESQScore.pesq(full_audio_clean_name,full_audio_noise_name,16000)
+    pesq_clean = PESQScore.pesq(full_audio_clean_name,full_audio_clean_name,16000)
     print('done')
-    print(pesq_approx)
     
     PESQ_Approx.append(pesq_approx)
     PESQ_Noise.append(pesq_noise)
+    
+    
+    print('Pesq Noise ' + pesq_noise)
+    print('Pesq Approx ' + pesq_approx)
+    print('Pesq Clean ' + pesq_clean)
     """
     MSE.append(mse)
-    #print('Pesq Noise %f' % pesq_noise)
-    #print('Pesq Approx %f' % pesq_approx)
-    
+    print('MSE %f' % mse) 
     
 print(model_name)
 print(noise_snr)
 #print('Mean Noise PESQ Score %f' % np.mean(PESQ_Noise))
 #print('Mean Approx PESQ Score %f' % np.mean(PESQ_Approx))
 print('Mean MSE Score %f' % np.mean(MSE))
-        
+print('Minimum mse %d' %np.argmin(MSE))        
+print('Max mse %d' % np.argmax(MSE))
 
     ###pass approx_clean_audio,clean_audio,noise_audio,clean_mag,noise_mag,approx_clean_mag into function
-    ### returns all the scores: PESQ,STOI,SDR anything
+    ### returns all the scores: PESQ,STOI,SDR anythiniiiiig
     
 
   
