@@ -147,81 +147,6 @@ int main (int argc, const char *argv []) {
     char * Error_Type = "Unknown error type.";
 
     if (Error_Flag == 0) {
-        printf("Perceptual Evaluation of Speech Quality (PESQ) - ITU-T Recommendation P.862.\n");
-        printf("Version 1.2 - 2 August 2002.\n");
-        printf("\n");
-        printf("PESQ Intellectual Property Rights Notice.\n");
-        printf("\n");
-        printf("DEFINITIONS:\n");
-        printf("For the purposes of this Intellectual Property Rights Notice the terms\n");
-        printf("'Perceptual Evaluation of Speech Quality Algorithm' and 'PESQ Algorithm'\n");
-        printf("refer to the objective speech quality measurement algorithm defined in ITU-T\n");
-        printf("Recommendation P.862; the term 'PESQ Software' refers to the C-code component\n");
-        printf("of P.862.\n");
-        printf("\n");
-        printf("NOTICE:\n");
-        printf("All copyright, trade marks, trade names, patents, know-how and all or any other\n");
-        printf("intellectual rights subsisting in or used in connection with including all\n");
-        printf("algorithms, documents and manuals relating to the PESQ Algorithm and or PESQ\n");
-        printf("Software are and remain the sole property in law, ownership, regulations,\n");
-        printf("treaties and patent rights of the Owners identified below. The user may not\n");
-        printf("dispute or question the ownership of the PESQ Algorithm and or PESQ Software.\n");
-        printf("\n");
-        printf("OWNERS ARE:\n");
-        printf("1.	British Telecommunications plc (BT), all rights assigned\n");
-        printf("      to Psytechnics Limited\n");
-        printf("2.	Royal KPN NV, all rights assigned to OPTICOM GmbH\n");
-        printf("\n");
-        printf("RESTRICTIONS:\n");
-        printf("The user cannot:\n");
-        printf("1.	alter, duplicate, modify, adapt, or translate in whole or in\n");
-        printf("      part any aspect of the PESQ Algorithm and or PESQ Software\n");
-        printf("2.	sell, hire, loan, distribute, dispose or put to any commercial\n");
-        printf("      use other than those permitted below in whole or in part any\n");
-        printf("      aspect of the PESQ Algorithm and or PESQ Software\n");
-        printf("\n");
-        printf("PERMITTED USE:\n");
-        printf("The user may:\n");
-        printf("1.	Use the PESQ Software to:\n");
-        printf("      i)   understand the PESQ Algorithm; or\n");
-        printf("      ii)  evaluate the ability of the PESQ Algorithm to perform its intended\n");
-        printf("           function of predicting the speech quality of a system; or\n");
-        printf("      iii) evaluate the computational complexity of the PESQ Algorithm,\n");
-        printf("           with the limitation that none of said evaluations or its\n");
-        printf("           results shall be used for external commercial use.\n");
-        printf("2.	Use the PESQ Software to test if an implementation of the PESQ\n");
-        printf("      Algorithm conforms to ITU-T Recommendation P.862.\n");
-        printf("3.	With the prior written permission of both Psytechnics Limited and\n");
-        printf("      OPTICOM GmbH, use the PESQ Software in accordance with the above\n");
-        printf("      Restrictions to perform work that meets all of the following criteria:\n");
-        printf("      i)    the work must contribute directly to the maintenance of an\n");
-        printf("            existing ITU recommendation or the development of a new ITU\n");
-        printf("            recommendation under an approved ITU Study Item; and\n");
-        printf("      ii)   the work and its results must be fully described in a\n");
-        printf("            written contribution to the ITU that is presented at a formal\n");
-        printf("            ITU meeting within one year of the start of the work; and\n");
-        printf("      iii)  neither the work nor its results shall be put to any\n");
-        printf("            commercial use other than making said contribution to the ITU.\n");
-        printf("            Said permission will be provided on a case-by-case basis.\n");
-        printf("\n");
-        printf("ANY OTHER USE OR APPLICATION OF THE PESQ SOFTWARE AND/OR THE PESQ ALGORITHM\n");
-        printf("WILL REQUIRE A PESQ LICENCE AGREEMENT, WHICH MAY BE OBTAINED FROM EITHER\n");
-        printf("OPTICOM GMBH OR PSYTECHNICS LIMITED. \n");
-        printf("\n");
-        printf("EACH COMPANY OFFERS OEM LICENSE AGREEMENTS, WHICH COMBINE OEM\n");
-        printf("IMPLEMENTATIONS OF THE PESQ ALGORITHM TOGETHER WITH A PESQ PATENT LICENSE\n");
-        printf("AGREEMENT. PESQ PATENT-ONLY LICENSE AGREEMENTS MAY BE OBTAINED FROM OPTICOM.\n");
-        printf("\n");
-        printf("***********************************************************************\n");
-        printf("*  OPTICOM GmbH                    *  Psytechnics Limited             *\n");
-        printf("*  Am Weichselgarten 7,            *  Fraser House, 23 Museum Street, *\n");
-        printf("*  D- 91058 Erlangen, Germany      *  Ipswich IP1 1HN, England        *\n");
-        printf("*  Phone: +49 (0) 9131 691 160     *  Phone: +44 (0) 1473 261 800     *\n");
-        printf("*  Fax:   +49 (0) 9131 691 325     *  Fax:   +44 (0) 1473 261 880     *\n");
-        printf("*  E-mail: info@opticom.de,        *  E-mail: info@psytechnics.com,   *\n");
-        printf("*  www.opticom.de                  *  www.psytechnics.com             *\n");
-        printf("***********************************************************************\n");
-        printf("\n");
 
         if (argc < 3){
             usage ();
@@ -303,7 +228,7 @@ int main (int argc, const char *argv []) {
     }
 
     if (Error_Flag == 0) {
-        printf ("\nPrediction : PESQ_MOS = %.3f\n", (double) err_info.pesq_mos);
+        printf ("PESQ_MOS = %.3f", (double) err_info.pesq_mos);
         return 0;
     } else {
         printf ("An error of type %d ", Error_Flag);
@@ -418,19 +343,13 @@ void pesq_measure (SIGNAL_INFO * ref_info, SIGNAL_INFO * deg_info,
         
     if ((*Error_Flag) == 0)
     {
-        printf ("Reading reference file %s...", ref_info-> path_name);
 
        load_src (Error_Flag, Error_Type, ref_info);
-       if ((*Error_Flag) == 0)
-           printf ("done.\n");
     }
     if ((*Error_Flag) == 0)
     {
-        printf ("Reading degraded file %s...", deg_info-> path_name);
 
        load_src (Error_Flag, Error_Type, deg_info);
-       if ((*Error_Flag) == 0)
-           printf ("done.\n");
     }
 
     if (((ref_info-> Nsamples - 2 * SEARCHBUFFER * Downsample < Fs / 4) ||
@@ -454,11 +373,9 @@ void pesq_measure (SIGNAL_INFO * ref_info, SIGNAL_INFO * deg_info,
         long    i;
         FILE *resultsFile;
 
-        printf (" Level normalization...\n");            
         fix_power_level (ref_info, "reference", maxNsamples);
         fix_power_level (deg_info, "degraded", maxNsamples);
 
-        printf (" IRS filtering...\n"); 
         apply_filter (ref_info-> data, ref_info-> Nsamples, 26, standard_IRS_filter_dB);
         apply_filter (deg_info-> data, deg_info-> Nsamples, 26, standard_IRS_filter_dB);
 
@@ -475,7 +392,6 @@ void pesq_measure (SIGNAL_INFO * ref_info, SIGNAL_INFO * deg_info,
     
         input_filter( ref_info, deg_info, ftmp );
 
-        printf (" Variable delay compensation...\n");            
         calc_VAD (ref_info);
         calc_VAD (deg_info);
         
@@ -526,7 +442,6 @@ void pesq_measure (SIGNAL_INFO * ref_info, SIGNAL_INFO * deg_info,
             }
         }        
 
-        printf (" Acoustic model processing...\n");    
         pesq_psychoacoustic_model (ref_info, deg_info, err_info, ftmp);
     
         safe_free (ref_info-> data);
