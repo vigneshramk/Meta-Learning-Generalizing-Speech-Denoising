@@ -50,6 +50,29 @@ class Auto(nn.Module):
 		x = self.classifier(x)
 		return x
 
+
+class Mask(nn.Module):
+	def __init__(self, input_size, output_size):
+		super(Auto, self).__init__()
+		self.hidden_size = 1600
+		#self.hidden2_size = 750
+        #change it to what the paper had. 3 hidden layers 1600
+        #but they normlized data and use log magnitude. 
+        #got the perfect hidden size and units by cross validation
+		self.classifier = nn.Sequential(
+						  nn.Linear(input_size, self.hidden_size),
+						  nn.ReLU(inplace=True),
+						  nn.Linear(self.hidden_size, self.hidden_size),
+						  nn.ReLU(inplace=True),
+                          nn.Linear(self.hidden_size, self.hidden_size),
+                          nn.ReLU(inplace=True),
+						  nn.Linear(self.hidden_size, output_size))
+
+	def forward(self, x):
+		x = self.classifier(x)
+		return F.sigmoid(x, dim=1)
+
+
 class Autoencoder(nn.Module):
 	def __init__(self, input_size,hidden_size):
 		super(Autoencoder, self).__init__()
@@ -100,13 +123,21 @@ class Denoise():
 		
 	def train_normal(self,noisy,clean,j,i,model_path):
 
-		noisy = np_to_variable(noisy,requires_grad=True)
-		clean = np_to_variable(clean)
+		noisy_th = np_to_variable(noisy,requires_grad=True)
+		clean_th = np_to_variable(clean)
 
-		output = self.model(noisy)
+		mask_th = self.model(noisy_th)
+
+		mask = mask_th.data.cpu().numpy()
+
+		noisy_middle = noisy[:,161*5:161*6]
+
+		output = noisy_middle*mask
+
+		output = np_to_variable(output,requires_grad=True)
 
 		
-		self.loss = self.criterion(output, clean)
+		self.loss = self.criterion(output, clean_th)
 		self.optimizer.zero_grad()
 		self.loss.backward()
 		self.optimizer.step()
@@ -276,7 +307,7 @@ def main(args):
 
 	num_iter = 10000
 
-	ae_model = Auto(1771, 161)
+	ae_model = Mask?(1771, 161)
 	if torch.cuda.is_available():
 		ae_model.cuda()
 
@@ -358,12 +389,10 @@ def main(args):
 		for i in range(0,num_samples-step,step):
 			clean = clean_sq[i:i+step,:]
 			noise = noisy_sq5[i:i+step,:]
-
-			noise = np.log(noise)
-			#print(noise.shape)
+			# noise = np.log(noise)
 			if(noise.shape[0] is not 0):
 				loss = dae.train_normal(noise,clean,j+1,i,model_path)
-	
+
 			# print("Batch - %s : %s , Loss - %1.4f" %(i, i+step,loss))
 
 			total_loss += loss
