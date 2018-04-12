@@ -338,10 +338,10 @@ def main(args):
 	dae = Denoise(ae_model,train_lr,meta_lr)
 
 	path_name = './figures/train_plots'
-	str_path1 = 'training_loss_all_normal.png'
+	str_path1 = 'training_loss_log_normal_6dB.png'
 	plot1_name = os.path.join(path_name,str_path1)
 
-	model_path = 'models/normal_train/noise_all_normal'
+	model_path = 'models/log_normal_train/noise_6db'
 
 	if not os.path.exists(path_name):
 		os.makedirs(path_name)
@@ -355,14 +355,15 @@ def main(args):
 
 		total_loss = 0
 		step = 500
-		for i in range(0,num_samples,step):
+		for i in range(0,num_samples-step,step):
 			clean = clean_sq[i:i+step,:]
-			noise = noisy_sq1[i:i+step,:]
+			noise = noisy_sq5[i:i+step,:]
 
 			noise = np.log(noise)
-
-			loss = dae.train_normal(noise,clean,j+1,i,model_path)
-
+			#print(noise.shape)
+			if(noise.shape[0] is not 0):
+				loss = dae.train_normal(noise,clean,j+1,i,model_path)
+	
 			# print("Batch - %s : %s , Loss - %1.4f" %(i, i+step,loss))
 
 			total_loss += loss
