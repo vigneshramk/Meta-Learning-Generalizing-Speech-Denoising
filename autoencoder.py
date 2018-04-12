@@ -325,22 +325,23 @@ def main(args):
 	noisy_total.append(noisy_sq3)
 	noisy_total.append(noisy_sq4)
 	noisy_total.append(noisy_sq5)
-
+	
+	noisy_total = np.array(noisy_total)
 	noisy_total = np.reshape(noisy_total,[noisy_total.shape[0]*noisy_total.shape[1],noisy_total.shape[2]])
 	np.random.shuffle(noisy_total)
 
 	clean_data = np.load('spectograms_train/clean/train/clean_single.npy')
-	clean_sq = np.reshape(clean_data,[noisy_data.shape[0]*clean_data.shape[1],clean_data.shape[2]])
+	clean_sq = np.reshape(clean_data,[clean_data.shape[0]*clean_data.shape[1],clean_data.shape[2]])
 
 	print(noisy_total.shape)
 	
 	dae = Denoise(ae_model,train_lr,meta_lr)
 
 	path_name = './figures/train_plots'
-	str_path1 = 'training_loss_3dB.png'
+	str_path1 = 'training_loss_all_normal.png'
 	plot1_name = os.path.join(path_name,str_path1)
 
-	model_path = 'models/normal_train/noise_3db'
+	model_path = 'models/normal_train/noise_all_normal'
 
 	if not os.path.exists(path_name):
 		os.makedirs(path_name)
