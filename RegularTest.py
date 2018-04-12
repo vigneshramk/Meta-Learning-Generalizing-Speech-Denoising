@@ -11,6 +11,8 @@ import torch.nn.functional as F
 import torch.optim as optim
 import autoencoder
 import PESQScore
+import time
+
 
 parser = argparse.ArgumentParser()
 parser.add_argument('--test_directory', type=str,
@@ -70,14 +72,27 @@ model = autoencoder.Auto(1771, 161)
 state_dict = torch.load(model_load_path, map_location=lambda storage, loc: storage)
 model.load_state_dict(state_dict['state_dict'])
 
+def test(model, clean, noise):
+    magSz, totalTime = noise.shape
+    specWidth = window_size*2+1
+    inputSz = magSz * specWidth
+    batch = np.zeros((totalTime-window_size*2, inputSz))
+    for idx in range(totalTime-window_size*2):
+        batch[idx, :] = noise[:, idx:idx+specWidth].flatten()
+    batch_tensor = autoencoder.np_to_variable(batch)
+    reconstruct = model(batch_tensor).data.numpy().T
+    mse = ((reconstruct - clean[:,window_size:-1*window_size]) ** 2).mean(axis=None)
+    return reconstruct, mse
+
 if torch.cuda.is_available():
     print('cuda available....')
     model.cuda()
-    
+
 model.eval()
 
 MSE = []
-PESQ = []
+PESQ_Noise = []
+PESQ_Approx = []
 STOI = []
 with open(test_load_path + noise_snr + '_' + exp_name + '.txt','a') as f:
     f.write(model_load_path + '\n' + test_load_path + '\n')
@@ -97,17 +112,18 @@ for idx in range(total_test):
     #Get the actual clean audio and noise audio
     full_audio_clean_name = test_file_path + audio_clean_name
     full_audio_noise_name = test_file_path + audio_noise_name
-    print(full_audio_clean_name)
-    print(full_audio_noise_name)
+    #print(full_audio_clean_name)
+    #print(full_audio_noise_name)
     [clean_audio,fs] = librosa.load(full_audio_clean_name,16000)
     [noise_audio,fs] = librosa.load(full_audio_noise_name,16000)
 
-    approx_clean_audio, mse = test(model, clean_audio, noise_audio)
+    approx_clean_mag, mse = test(model, clean_mag, noise_mag)
+    print(mse)
     
     ### WOULD PASS THROUGH approx_clean_mag into reconstruct.
     ### RETURNS Approx_clean_audio
     ### this is just for testing
-    approx_clean_audio = utils.reconstruct_clean(noise_audio, clean_mag[:,window_size:-1 * window_size])
+    approx_clean_audio = utils.reconstruct_clean(noise_audio, approx_clean_mag)
     approx_clean_name =test_file_path + 'approx_clean_' + noise_snr + '_' + exp_name + '.WAV'
     if save_audio:
         print('saving audio...')
@@ -116,30 +132,36 @@ for idx in range(total_test):
         with open(test_load_path + noise_snr + '_' + exp_name + '.txt','a') as f:
             f.write(full_audio_clean_name + '\t' + full_audio_noise_name + '\n')
             f.write(full_audio_clean_name + '\t' + approx_clean_name + '\n' )
-
+    """
     # logging the scores
-    PESQ[idx] = PESQScore.pesq(approx_clean_name, full_audio_noise_name, fs)
-    MSE[idx] = mse
-
-    if idx == 3:
-        break
+    time.sleep(5)
+    print('PESQ Scores')
+    pesq_approx = PESQScore.pesq('../../../' + full_audio_clean_name, '../../../' +  approx_clean_name,16000)
+    pesq_noise =PESQScore.pesq('../../../' + full_audio_clean_name, '../../../' + full_audio_noise_name, 16000)
+    print('done')
+    print(pesq_approx)
+    
+    PESQ_Approx.append(pesq_approx)
+    PESQ_Noise.append(pesq_noise)
+    """
+    MSE.append(mse)
+    #print('Pesq Noise %f' % pesq_noise)
+    #print('Pesq Approx %f' % pesq_approx)
+    
+    
+print(model_name)
+print(noise_snr)
+#print('Mean Noise PESQ Score %f' % np.mean(PESQ_Noise))
+#print('Mean Approx PESQ Score %f' % np.mean(PESQ_Approx))
+print('Mean MSE Score %f' % np.mean(MSE))
+        
 
     ###pass approx_clean_audio,clean_audio,noise_audio,clean_mag,noise_mag,approx_clean_mag into function
     ### returns all the scores: PESQ,STOI,SDR anything
     
 
   
-def test(model, clean_audio, noise_audio):
-    magSz, totalTime = noise_audio.shape
-    specWidth = window_size*2+1
-    inputSz = magSz * specWidth
-    batch = np.zeros(totalTime-window_size*2, inputSz)
-    for idx in range(totalTime-window_size*2):
-        batch[idx, :] = np.reshape(noise_audio[:, idx:idx+window_size*2],1)
-    batch_tensor = autoencoder.np_to_variable(batch)
-    reconstruct = model(batch_tensor).numpy().T
-    mse = ((reconstruct - clean_audio[:,window_size:totalTime-window_size]) ** 2).mean(axis=None)
-    return reconstruct, mse
+
 
 
 
