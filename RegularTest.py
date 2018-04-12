@@ -23,7 +23,7 @@ parser.add_argument('--model_directory', type=str,
 parser.add_argument('--model_name', type=str,
 						default='noise_-6db/', help="name of actual model weights")
 parser.add_argument('--save_audio', type=bool,
-						default=True, help="if u want to save the audio files")
+						default=False, help="if u want to save the audio files")
 parser.add_argument('--window_size', type=int,
 						default=5, help="size of window on each side")
 parser.add_argument('--exp_name', type=str,
