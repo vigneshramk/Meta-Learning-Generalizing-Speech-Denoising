@@ -15,7 +15,7 @@ parser.add_argument('--data_path', type=str,
 args = parser.parse_args()
 data_path = args.data_path
 noise = 'babble'
-noise_snr = [-15,-10,-6,-2,0,2,4,8]
+noise_snr = [-15,-10,-6,-4,-3,-2,0,2,3,4,6,8]
 fs=16000
 n_fft = 320
 hop_size = 160
@@ -50,6 +50,7 @@ for idx, line in enumerate(total):
     if not os.path.exists(save_directory_noise):
         os.makedirs(save_directory_noise)
     np.save(save_directory_noise + 'spect_clean.npy', magC)
+    wavfile.write(save_directory_noise + 'audio_clean.WAV', fs, clean_audio)
     print(clean_spect.shape)
 
     for snr in noise_snr:
