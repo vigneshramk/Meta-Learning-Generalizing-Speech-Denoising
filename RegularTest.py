@@ -23,9 +23,12 @@ parser.add_argument('--model_directory', type=str,
 parser.add_argument('--model_name', type=str,
 						default='noise_-6db/', help="name of actual model weights")
 parser.add_argument('--save_audio', type=bool,
-						default=False, help="if u want to save the audio files")
+						default=True, help="if u want to save the audio files")
 parser.add_argument('--window_size', type=int,
 						default=5, help="size of window on each side")
+parser.add_argument('--exp_name', type=str,
+						default='test', help="name of your experiment")
+
  
 args = parser.parse_args()
 test_directory = args.test_directory
@@ -35,6 +38,7 @@ model_directory = args.model_directory
 model_name = args.model_name
 save_audio = args.save_audio
 window_size = args.window_size
+exp_name = args.exp_name
 
 model_load_path = model_directory + model_name + 'model_auto.h5'
 test_load_path = test_directory + noise_type
@@ -46,6 +50,8 @@ print('noise type test')
 print(noise_type + '\n')
 print('noise snr test')
 print(noise_snr + '\n')
+print('experiment name')
+print(exp_name + '\n')
 
 total_test = 1680
 noise_spect_name = 'spect_' + noise_snr + '.npy'
@@ -72,6 +78,10 @@ model.eval()
 MSE = []
 PESQ = []
 STOI = []
+with open(test_load_path + noise_snr + '_' + exp_name + '.txt','a') as f:
+    f.write(model_load_path + '\n' + test_load_path + '\n')
+   
+
 
 for idx in range(total_test):
     print('Testing File: %d' % idx)
@@ -93,20 +103,29 @@ for idx in range(total_test):
 
     #PASS NOISE_MAG into function that returns APPROX_CLEAN_MAG and MMSE
 
-    ###some function right here
+    ###some function ri2ght here
+  
 
     ### WOULD PASS THROUGH approx_clean_mag into reconstruct.
     ### RETURNS Approx_clean_audio
     ### this is just for testing
     approx_clean_audio = utils.reconstruct_clean(noise_audio, clean_mag[:,window_size:-1 * window_size])
-
+    approx_clean_name =test_file_path + 'approx_clean_' + noise_snr + '_' + exp_name + '.WAV'
     if save_audio:
         print('saving audio...')
-        wavfile.write(test_file_path + 'approx_clean_' + noise_snr + '.WAV',16000,approx_clean_audio)
+        wavfile.write(approx_clean_name, 16000,approx_clean_audio)
+        #np.save(test_file_path + 'approx_clean_mag_' + noise_snr + '_' + exp_name + '.npy', approx_clean_mag)
+        with open(test_load_path + noise_snr + '_' + exp_name + '.txt','a') as f:
+            f.write(full_audio_clean_name + '\t' + full_audio_noise_name + '\n')
+            f.write(full_audio_clean_name + '\t' + approx_clean_name + '\n' )
+
+
+    if idx == 3:
+        break
 
     ###pass approx_clean_audio,clean_audio,noise_audio,clean_mag,noise_mag,approx_clean_mag into function
     ### returns all the scores: PESQ,STOI,SDR anything
-    break
+    
 
   
 
