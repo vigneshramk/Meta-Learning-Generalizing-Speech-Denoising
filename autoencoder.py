@@ -356,7 +356,9 @@ def main(args):
 		step = 500
 		for i in range(0,num_samples,step):
 			clean = clean_sq[i:i+step,:]
-			noise = noisy_total[i:i+step,:]
+			noise = noisy_sq1[i:i+step,:]
+
+			noise = np.log(noise)
 
 			loss = dae.train_normal(noise,clean,j+1,i,model_path)
 
