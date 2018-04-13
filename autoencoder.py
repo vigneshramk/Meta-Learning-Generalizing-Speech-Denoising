@@ -123,6 +123,8 @@ class Denoise():
 		
 	def train_normal(self,noisy,clean,j,i,model_path):
 
+		#print(noisy.shape)
+		#print(clean.shape)
 		noisy_th = np_to_variable(noisy,requires_grad=True)
 		clean_th = np_to_variable(clean)
 
@@ -135,13 +137,14 @@ class Denoise():
 		output = noisy_middle*mask_th
 
 		# output = np_to_variable(output,requires_grad=True)
+		
 
 		self.loss = self.criterion(output, clean_th)
 		self.optimizer.zero_grad()
 		self.loss.backward()
 		self.optimizer.step()
 
-		if j%500==0 and i==0:
+		if j%50==0 and i==0:
 
 			state = {
 			    'epoch': j,
@@ -405,6 +408,7 @@ def main(args):
 
 	# Normal training with one SNR
 	num_samples = int(noisy_total.shape[0])
+	num_batches = num_samples/500
 	for j in range(num_epochs):
 
 		total_loss = 0
@@ -420,7 +424,7 @@ def main(args):
 
 			total_loss += loss
 			
-		print('epoch [{}/{}], MSE_loss:{:.4f}'.format(j + 1, num_epochs, total_loss))
+		print('epoch [{}/{}], MSE_loss:{:.4f}'.format(j + 1, num_epochs, total_loss/num_batches))
 		ax1.scatter(j+1, total_loss)
 		if j%100 == 0:
 			ax1.figure.savefig(plot1_name)
