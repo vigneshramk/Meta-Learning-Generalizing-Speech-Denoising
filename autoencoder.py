@@ -130,19 +130,18 @@ class Denoise():
 
 		mask = mask_th.data.cpu().numpy()
 
-		noisy_middle = noisy[:,161*5:161*6]
+		noisy_middle = noisy_th[:,161*5:161*6]
 
-		output = noisy_middle*mask
+		output = noisy_middle*mask_th
 
-		output = np_to_variable(output,requires_grad=True)
+		# output = np_to_variable(output,requires_grad=True)
 
-		
 		self.loss = self.criterion(output, clean_th)
 		self.optimizer.zero_grad()
 		self.loss.backward()
 		self.optimizer.step()
 
-		if j%100==0 and i==0:
+		if j%500==0 and i==0:
 
 			state = {
 			    'epoch': j,
