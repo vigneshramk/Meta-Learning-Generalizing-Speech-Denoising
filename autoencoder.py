@@ -401,10 +401,7 @@ def main(args):
 		ax1.scatter(j+1, total_loss)
 		if j%100 == 0:
 			ax1.figure.savefig(plot1_name)
-
-
-
-
+			
 	#Meta-training with five SNR
 	# dae.train_maml(meta_train_noisy,meta_train_clean,train_datapts,meta_train_datapts,num_iter)
 
