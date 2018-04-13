@@ -342,6 +342,9 @@ def main(args):
 	noisy_data4 = np.load('spectograms_train/noise/train/noise_3.npy')
 	noisy_data5 = np.load('spectograms_train/noise/train/noise_6.npy')
 
+	clean_data = np.load('spectograms_train/clean/train/clean_single.npy')
+	
+
 	noisy_sq1 = np.reshape(noisy_data1,[noisy_data1.shape[0]*noisy_data1.shape[1],noisy_data1.shape[2]])
 	noisy_sq2 = np.reshape(noisy_data2,[noisy_data2.shape[0]*noisy_data2.shape[1],noisy_data2.shape[2]])
 	noisy_sq3 = np.reshape(noisy_data3,[noisy_data3.shape[0]*noisy_data3.shape[1],noisy_data3.shape[2]])
@@ -358,20 +361,41 @@ def main(args):
 	
 	noisy_total = np.array(noisy_total)
 	noisy_total = np.reshape(noisy_total,[noisy_total.shape[0]*noisy_total.shape[1],noisy_total.shape[2]])
-	np.random.shuffle(noisy_total)
+	
 
-	clean_data = np.load('spectograms_train/clean/train/clean_single.npy')
-	clean_sq = np.reshape(clean_data,[clean_data.shape[0]*clean_data.shape[1],clean_data.shape[2]])
+	clean_sq1 = np.reshape(clean_data,[clean_data.shape[0]*clean_data.shape[1],clean_data.shape[2]])
+	clean_sq2 = np.reshape(clean_data,[clean_data.shape[0]*clean_data.shape[1],clean_data.shape[2]])
+	clean_sq3 = np.reshape(clean_data,[clean_data.shape[0]*clean_data.shape[1],clean_data.shape[2]])
+	clean_sq4 = np.reshape(clean_data,[clean_data.shape[0]*clean_data.shape[1],clean_data.shape[2]])
+	clean_sq5 = np.reshape(clean_data,[clean_data.shape[0]*clean_data.shape[1],clean_data.shape[2]])
+
+	clean_total =[]
+
+	clean_total.append(clean_sq1)
+	clean_total.append(clean_sq2)
+	clean_total.append(clean_sq3)
+	clean_total.append(clean_sq4)
+	clean_total.append(clean_sq5)
+
+	clean_total = np.array(clean_total)
+	clean_total = np.reshape(clean_total,[clean_total.shape[0]*clean_total.shape[1],clean_total.shape[2]])
+
+	shuffle_idx = np.random.permutation(noisy_total.shape[0])
+
+	noisy_total = noisy_total[shuffle_idx]
+	clean_total = clean_total[shuffle_idx]
 
 	print(noisy_total.shape)
+	print(clean_total.shape)
+
 	
 	dae = Denoise(ae_model,train_lr,meta_lr)
 
 	path_name = './figures/train_plots'
-	str_path1 = 'training_loss_mask_normal_-6dB.png'
+	str_path1 = 'training_loss_mask_normal_total.png'
 	plot1_name = os.path.join(path_name,str_path1)
 
-	model_path = 'models/mask_normal_train/noise_-6db'
+	model_path = 'models/mask_normal_train/noise_total'
 
 	if not os.path.exists(path_name):
 		os.makedirs(path_name)
@@ -386,8 +410,8 @@ def main(args):
 		total_loss = 0
 		step = 500
 		for i in range(0,num_samples-step,step):
-			clean = clean_sq[i:i+step,:]
-			noise = noisy_sq5[i:i+step,:]
+			clean = clean_total[i:i+step,:]
+			noise = noisy_total[i:i+step,:]
 			# noise = np.log(noise)
 			if(noise.shape[0] is not 0):
 				loss = dae.train_normal(noise,clean,j+1,i,model_path)
