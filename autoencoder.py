@@ -307,7 +307,7 @@ def main(args):
 
 	num_iter = 10000
 
-	ae_model = Mask?(1771, 161)
+	ae_model = Mask(1771, 161)
 	if torch.cuda.is_available():
 		ae_model.cuda()
 
