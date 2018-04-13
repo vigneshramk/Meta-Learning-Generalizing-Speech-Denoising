@@ -38,11 +38,11 @@ reg_training_data = LoadData(tsv_file='dataset/meta_data/train/train.txt', clean
 meta_train_loader = DataLoader(meta_training_data,batch_size=4610,shuffle=True,num_workers=0)
 reg_train_loader = DataLoader(reg_training_data,batch_size=1,shuffle=True,num_workers=0) 
 
-path1_name = './spectograms_train/noise/train'
+path1_name = './spectograms_train30/noise/train'
 if not os.path.exists(path1_name):
         os.makedirs(path1_name)
 
-path2_name = './spectograms_train/clean/train'
+path2_name = './spectograms_train30/clean/train'
 if not os.path.exists(path2_name):
         os.makedirs(path2_name)
 
