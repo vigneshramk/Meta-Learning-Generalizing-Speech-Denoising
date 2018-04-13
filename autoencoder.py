@@ -53,7 +53,7 @@ class Auto(nn.Module):
 
 class Mask(nn.Module):
 	def __init__(self, input_size, output_size):
-		super(Auto, self).__init__()
+		super(Mask, self).__init__()
 		self.hidden_size = 1600
 		#self.hidden2_size = 750
         #change it to what the paper had. 3 hidden layers 1600
@@ -70,7 +70,7 @@ class Mask(nn.Module):
 
 	def forward(self, x):
 		x = self.classifier(x)
-		return F.sigmoid(x, dim=1)
+		return F.sigmoid(x)
 
 
 class Autoencoder(nn.Module):
@@ -130,19 +130,18 @@ class Denoise():
 
 		mask = mask_th.data.cpu().numpy()
 
-		noisy_middle = noisy[:,161*5:161*6]
+		noisy_middle = noisy_th[:,161*5:161*6]
 
-		output = noisy_middle*mask
+		output = noisy_middle*mask_th
 
-		output = np_to_variable(output,requires_grad=True)
+		# output = np_to_variable(output,requires_grad=True)
 
-		
 		self.loss = self.criterion(output, clean_th)
 		self.optimizer.zero_grad()
 		self.loss.backward()
 		self.optimizer.step()
 
-		if j%100==0 and i==0:
+		if j%500==0 and i==0:
 
 			state = {
 			    'epoch': j,
@@ -369,10 +368,10 @@ def main(args):
 	dae = Denoise(ae_model,train_lr,meta_lr)
 
 	path_name = './figures/train_plots'
-	str_path1 = 'training_loss_log_normal_6dB.png'
+	str_path1 = 'training_loss_mask_normal_-6dB.png'
 	plot1_name = os.path.join(path_name,str_path1)
 
-	model_path = 'models/log_normal_train/noise_6db'
+	model_path = 'models/mask_normal_train/noise_-6db'
 
 	if not os.path.exists(path_name):
 		os.makedirs(path_name)
@@ -401,10 +400,7 @@ def main(args):
 		ax1.scatter(j+1, total_loss)
 		if j%100 == 0:
 			ax1.figure.savefig(plot1_name)
-
-
-
-
+			
 	#Meta-training with five SNR
 	# dae.train_maml(meta_train_noisy,meta_train_clean,train_datapts,meta_train_datapts,num_iter)
 
