@@ -53,7 +53,7 @@ class Auto(nn.Module):
 
 class Mask(nn.Module):
 	def __init__(self, input_size, output_size):
-		super(Auto, self).__init__()
+		super(Mask, self).__init__()
 		self.hidden_size = 1600
 		#self.hidden2_size = 750
         #change it to what the paper had. 3 hidden layers 1600
@@ -70,7 +70,7 @@ class Mask(nn.Module):
 
 	def forward(self, x):
 		x = self.classifier(x)
-		return F.sigmoid(x, dim=1)
+		return F.sigmoid(x)
 
 
 class Autoencoder(nn.Module):
@@ -307,7 +307,7 @@ def main(args):
 
 	num_iter = 10000
 
-	ae_model = Mask?(1771, 161)
+	ae_model = Mask(1771, 161)
 	if torch.cuda.is_available():
 		ae_model.cuda()
 
@@ -369,10 +369,10 @@ def main(args):
 	dae = Denoise(ae_model,train_lr,meta_lr)
 
 	path_name = './figures/train_plots'
-	str_path1 = 'training_loss_log_normal_6dB.png'
+	str_path1 = 'training_loss_mask_normal_-6dB.png'
 	plot1_name = os.path.join(path_name,str_path1)
 
-	model_path = 'models/log_normal_train/noise_6db'
+	model_path = 'models/mask_normal_train/noise_-6db'
 
 	if not os.path.exists(path_name):
 		os.makedirs(path_name)
