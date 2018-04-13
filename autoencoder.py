@@ -368,10 +368,10 @@ def main(args):
 	dae = Denoise(ae_model,train_lr,meta_lr)
 
 	path_name = './figures/train_plots'
-	str_path1 = 'training_loss_mask_normal_-6dB.png'
+	str_path1 = 'training_loss_mask_normal_6dB.png'
 	plot1_name = os.path.join(path_name,str_path1)
 
-	model_path = 'models/mask_normal_train/noise_-6db'
+	model_path = 'models/mask_normal_train/noise_6db'
 
 	if not os.path.exists(path_name):
 		os.makedirs(path_name)
