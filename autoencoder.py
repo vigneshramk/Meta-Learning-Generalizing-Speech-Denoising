@@ -123,14 +123,18 @@ class Denoise():
 		
 	def train_normal(self,noisy,clean,j,i,model_path):
 
+<<<<<<< 283dea36b6b6a1984ee424665a89f1a19d32c6c6
 		#print(noisy.shape)
 		#print(clean.shape)
 		noisy_th = np_to_variable(noisy,requires_grad=True)
+=======
+		noisy_th = np_to_variable(noisy)
+>>>>>>> MAML train close to ready
 		clean_th = np_to_variable(clean)
 
 		mask_th = self.model(noisy_th)
 
-		mask = mask_th.data.cpu().numpy()
+		#mask = mask_th.data.cpu().numpy()
 
 		noisy_middle = noisy_th[:,161*5:161*6]
 
@@ -160,13 +164,12 @@ class Denoise():
 
 	def train_maml(self,meta_train_noisy,meta_train_clean,train_datapts,meta_train_datapts,num_iter):
 
-		num_data,num_features,num_tasks = meta_train_noisy.shape
+		num_tasks,num_data,num_features, = meta_train_noisy.shape
 
 		K = train_datapts
 		D = meta_train_datapts
 
 		theta_list = []
-
 
 		for i in range(num_iter):
 
@@ -180,17 +183,19 @@ class Denoise():
 				#Sample K datapoints from the task t
 				idx_train = np.random.randint(num_data,size=K)
 
-				noisy = meta_train_noisy[idx_train,:,t]
-				clean = meta_train_clean[idx_train,:,t]
+				noisy = meta_train_noisy[t,idx_train,:]
+				clean = meta_train_clean[t,idx_train,:]
 
 				noisy = np_to_variable(noisy, requires_grad=True)
 				clean = np_to_variable(clean, requires_grad=False)
+
+				output1 = self.model(noisy)
 
 				# Initialize the network with current network weights
 				self.set_weights(theta)
 
 				# Train the network with the given K samples
-				self.loss = self.criterion(noisy, clean)
+				self.loss = self.criterion(output1, clean)
 				self.optimizer.zero_grad()
 				self.loss.backward()
 				self.optimizer.step()
@@ -209,15 +214,17 @@ class Denoise():
 				#Sample K datapoints from the task t
 				idx_meta = np.random.randint(num_data,size=D)
 
-				noisy = meta_train_noisy[idx_meta,:,t]
-				clean = meta_train_clean[idx_meta,:,t]
+				noisy = meta_train_noisy[t,idx_meta,:]
+				clean = meta_train_clean[t,idx_meta,:]
 
 				noisy = np_to_variable(noisy, requires_grad=True)
 				clean = np_to_variable(clean, requires_grad=False)
 
+				output2 = self.model(noisy)
+
 				#Get the loss w.r.t the theta_i network
 				self.set_weights(theta_list[t])
-				self.loss = self.criterion(noisy, clean)
+				self.loss = self.criterion(output2, clean)
 
 				# Set the model weights to theta before training
 				#Train with this theta on the D samples
@@ -304,12 +311,8 @@ def main(args):
 	num_samples = 1000
 	num_features = 200
 	num_tasks = 5
-	train_datapts = 100
-	meta_train_datapts = 100
-
-	num_iter = 10000
-
-	ae_model = Mask(1771, 161)
+	
+	ae_model = Auto(1771, 161)
 	if torch.cuda.is_available():
 		ae_model.cuda()
 
@@ -363,6 +366,9 @@ def main(args):
 	noisy_total.append(noisy_sq5)
 	
 	noisy_total = np.array(noisy_total)
+
+	meta_train_noisy = noisy_total
+
 	noisy_total = np.reshape(noisy_total,[noisy_total.shape[0]*noisy_total.shape[1],noisy_total.shape[2]])
 	
 
@@ -381,6 +387,9 @@ def main(args):
 	clean_total.append(clean_sq5)
 
 	clean_total = np.array(clean_total)
+
+	meta_train_clean = clean_total
+
 	clean_total = np.reshape(clean_total,[clean_total.shape[0]*clean_total.shape[1],clean_total.shape[2]])
 
 	shuffle_idx = np.random.permutation(noisy_total.shape[0])
@@ -388,17 +397,17 @@ def main(args):
 	noisy_total = noisy_total[shuffle_idx]
 	clean_total = clean_total[shuffle_idx]
 
-	print(noisy_total.shape)
-	print(clean_total.shape)
+	print(meta_train_noisy.shape)
+	print(meta_train_clean.shape)
 
 	
 	dae = Denoise(ae_model,train_lr,meta_lr)
 
-	path_name = './figures/train_plots'
+	path_name = './figures/meta_train_plots'
 	str_path1 = 'training_loss_mask_normal_total.png'
 	plot1_name = os.path.join(path_name,str_path1)
 
-	model_path = 'models/mask_normal_train/noise_total'
+	model_path = 'models/meta/'
 
 	if not os.path.exists(path_name):
 		os.makedirs(path_name)
@@ -407,30 +416,30 @@ def main(args):
 		os.makedirs(model_path)
 
 	# Normal training with one SNR
-	num_samples = int(noisy_total.shape[0])
-	num_batches = num_samples/500
-	for j in range(num_epochs):
 
-		total_loss = 0
-		step = 500
-		for i in range(0,num_samples-step,step):
-			clean = clean_total[i:i+step,:]
-			noise = noisy_total[i:i+step,:]
-			# noise = np.log(noise)
-			if(noise.shape[0] is not 0):
-				loss = dae.train_normal(noise,clean,j+1,i,model_path)
-
-			# print("Batch - %s : %s , Loss - %1.4f" %(i, i+step,loss))
-
-			total_loss += loss
-			
-		print('epoch [{}/{}], MSE_loss:{:.4f}'.format(j + 1, num_epochs, total_loss/num_batches))
-		ax1.scatter(j+1, total_loss)
-		if j%100 == 0:
-			ax1.figure.savefig(plot1_name)
-			
+	# num_samples = int(noisy_total.shape[0])
+	# for j in range(num_epochs):
+	# 	total_loss = 0
+	# 	step = 500
+	# 	for i in range(0,num_samples-step,step):
+	# 		clean = clean_total[i:i+step,:]
+	# 		noise = noisy_total[i:i+step,:]
+	# 		# noise = np.log(noise)
+	# 		if(noise.shape[0] is not 0):
+	# 			loss = dae.train_normal(noise,clean,j+1,i,model_path)
+	# 		# print("Batch - %s : %s , Loss - %1.4f" %(i, i+step,loss))
+	# 		total_loss += loss
+	# 	print('epoch [{}/{}], MSE_loss:{:.4f}'.format(j + 1, num_epochs, total_loss))
+	# 	ax1.scatter(j+1, total_loss)
+	# 	if j%100 == 0:
+	# 		ax1.figure.savefig(plot1_name)
+	
+	
+	train_datapts = 500
+	meta_train_datapts = 500
+	num_iter = 10000		
 	#Meta-training with five SNR
-	# dae.train_maml(meta_train_noisy,meta_train_clean,train_datapts,meta_train_datapts,num_iter)
+	dae.train_maml(meta_train_noisy,meta_train_clean,train_datapts,meta_train_datapts,num_iter)
 
 
 
