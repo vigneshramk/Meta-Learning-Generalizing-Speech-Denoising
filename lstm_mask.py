@@ -113,13 +113,12 @@ class Denoise():
 
     def train_maml(self,meta_train_noisy,meta_train_clean,train_datapts,meta_train_datapts,num_iter):
 
-        num_data,num_features,num_tasks = meta_train_noisy.shape
+        num_tasks,num_data,num_features = meta_train_noisy.shape
 
         K = train_datapts
         D = meta_train_datapts
 
         theta_list = []
-
 
         for i in range(num_iter):
 
@@ -133,19 +132,19 @@ class Denoise():
                 #Sample K datapoints from the task t
                 idx_train = np.random.randint(num_data,size=K)
 
-                noisy = meta_train_noisy[idx_train,:,t]
-                clean = meta_train_clean[idx_train,:,t]
+                noisy = meta_train_noisy[t,idx_train,:]
+                clean = meta_train_clean[t,idx_train,:]
 
                 noisy = np_to_variable(noisy, requires_grad=True)
                 clean = np_to_variable(clean, requires_grad=False)
+
+                output1 = self.model(noisy)
 
                 # Initialize the network with current network weights
                 self.set_weights(theta)
 
                 # Train the network with the given K samples
-
-                approx_clean = self.model(noisy) 
-                self.loss = self.criterion(approx_clean, clean)
+                self.loss = self.criterion(output1, clean)
                 self.optimizer.zero_grad()
                 self.loss.backward()
                 self.optimizer.step()
@@ -164,11 +163,13 @@ class Denoise():
                 #Sample K datapoints from the task t
                 idx_meta = np.random.randint(num_data,size=D)
 
-                noisy = meta_train_noisy[idx_meta,:,t]
-                clean = meta_train_clean[idx_meta,:,t]
+                noisy = meta_train_noisy[t,idx_meta,:]
+                clean = meta_train_clean[t,idx_meta,:]
 
                 noisy = np_to_variable(noisy, requires_grad=True)
                 clean = np_to_variable(clean, requires_grad=False)
+
+                # output2 = self.model(noisy)
 
                 #Get the loss w.r.t the theta_i network
                 self.set_weights(theta_list[t])
