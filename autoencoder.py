@@ -109,6 +109,9 @@ class Denoise():
 		#   curr_model = {'state_dict': self.model.state_dict()}
 		#                  # 'optimizer': self.meta_optimizer.state_dict()}
 		return curr_model
+
+	def grad_reverse(grad):
+        return grad.clone() * -1
 	
 	def set_weights(self,curr_model):
 
@@ -123,13 +126,8 @@ class Denoise():
 		
 	def train_normal(self,noisy,clean,j,i,model_path):
 
-<<<<<<< 283dea36b6b6a1984ee424665a89f1a19d32c6c6
-		#print(noisy.shape)
-		#print(clean.shape)
-		noisy_th = np_to_variable(noisy,requires_grad=True)
-=======
+
 		noisy_th = np_to_variable(noisy)
->>>>>>> MAML train close to ready
 		clean_th = np_to_variable(clean)
 
 		mask_th = self.model(noisy_th)
@@ -224,13 +222,20 @@ class Denoise():
 
 				#Get the loss w.r.t the theta_i network
 				self.set_weights(theta_list[t])
-				self.loss = self.criterion(output2, clean)
+				
+				self.loss_outer = F.mse_loss(output2, clean)
+
+				grads = torch.autograd.grad(self.loss_outer, self.model.parameters(),retain_graph=True)
+
+				new_weights = [(param - 1e-4*grad) for (param,grad) in zip(self.model.parameters(),grads)]
+
+				# print(theta.items())
 
 				# Set the model weights to theta before training
 				#Train with this theta on the D samples
-				self.set_weights(theta)
+				# self.set_weights(new_weights)
 				self.meta_optimizer.zero_grad()
-				self.loss.backward()
+				self.loss_outer.backward(grads)
 				self.meta_optimizer.step()
 
 				theta = self.get_weights()
@@ -342,63 +347,63 @@ def main(args):
 
 	# reg_train_loader = DataLoader(reg_training_data,batch_size=batch_size,shuffle=True,num_workers=0)
 	
-	noisy_data1 = np.load('spectograms_train/noise/train/noise_-6.npy')
-	noisy_data2 = np.load('spectograms_train/noise/train/noise_-3.npy')
-	noisy_data3 = np.load('spectograms_train/noise/train/noise_0.npy')
-	noisy_data4 = np.load('spectograms_train/noise/train/noise_3.npy')
-	noisy_data5 = np.load('spectograms_train/noise/train/noise_6.npy')
+	# noisy_data1 = np.load('spectograms_train/noise/train/noise_-6.npy')
+	# noisy_data2 = np.load('spectograms_train/noise/train/noise_-3.npy')
+	# noisy_data3 = np.load('spectograms_train/noise/train/noise_0.npy')
+	# noisy_data4 = np.load('spectograms_train/noise/train/noise_3.npy')
+	# noisy_data5 = np.load('spectograms_train/noise/train/noise_6.npy')
 
-	clean_data = np.load('spectograms_train/clean/train/clean_single.npy')
+	# clean_data = np.load('spectograms_train/clean/train/clean_single.npy')
 	
 
-	noisy_sq1 = np.reshape(noisy_data1,[noisy_data1.shape[0]*noisy_data1.shape[1],noisy_data1.shape[2]])
-	noisy_sq2 = np.reshape(noisy_data2,[noisy_data2.shape[0]*noisy_data2.shape[1],noisy_data2.shape[2]])
-	noisy_sq3 = np.reshape(noisy_data3,[noisy_data3.shape[0]*noisy_data3.shape[1],noisy_data3.shape[2]])
-	noisy_sq4 = np.reshape(noisy_data4,[noisy_data4.shape[0]*noisy_data4.shape[1],noisy_data4.shape[2]])
-	noisy_sq5 = np.reshape(noisy_data5,[noisy_data5.shape[0]*noisy_data5.shape[1],noisy_data5.shape[2]])
+	# noisy_sq1 = np.reshape(noisy_data1,[noisy_data1.shape[0]*noisy_data1.shape[1],noisy_data1.shape[2]])
+	# noisy_sq2 = np.reshape(noisy_data2,[noisy_data2.shape[0]*noisy_data2.shape[1],noisy_data2.shape[2]])
+	# noisy_sq3 = np.reshape(noisy_data3,[noisy_data3.shape[0]*noisy_data3.shape[1],noisy_data3.shape[2]])
+	# noisy_sq4 = np.reshape(noisy_data4,[noisy_data4.shape[0]*noisy_data4.shape[1],noisy_data4.shape[2]])
+	# noisy_sq5 = np.reshape(noisy_data5,[noisy_data5.shape[0]*noisy_data5.shape[1],noisy_data5.shape[2]])
 
-	noisy_total = []
+	# noisy_total = []
 
-	noisy_total.append(noisy_sq1)
-	noisy_total.append(noisy_sq2)
-	noisy_total.append(noisy_sq3)
-	noisy_total.append(noisy_sq4)
-	noisy_total.append(noisy_sq5)
+	# noisy_total.append(noisy_sq1)
+	# noisy_total.append(noisy_sq2)
+	# noisy_total.append(noisy_sq3)
+	# noisy_total.append(noisy_sq4)
+	# noisy_total.append(noisy_sq5)
 	
-	noisy_total = np.array(noisy_total)
+	# noisy_total = np.array(noisy_total)
 
-	meta_train_noisy = noisy_total
+	# meta_train_noisy = noisy_total
 
-	noisy_total = np.reshape(noisy_total,[noisy_total.shape[0]*noisy_total.shape[1],noisy_total.shape[2]])
+	# noisy_total = np.reshape(noisy_total,[noisy_total.shape[0]*noisy_total.shape[1],noisy_total.shape[2]])
 	
 
-	clean_sq1 = np.reshape(clean_data,[clean_data.shape[0]*clean_data.shape[1],clean_data.shape[2]])
-	clean_sq2 = np.reshape(clean_data,[clean_data.shape[0]*clean_data.shape[1],clean_data.shape[2]])
-	clean_sq3 = np.reshape(clean_data,[clean_data.shape[0]*clean_data.shape[1],clean_data.shape[2]])
-	clean_sq4 = np.reshape(clean_data,[clean_data.shape[0]*clean_data.shape[1],clean_data.shape[2]])
-	clean_sq5 = np.reshape(clean_data,[clean_data.shape[0]*clean_data.shape[1],clean_data.shape[2]])
+	# clean_sq1 = np.reshape(clean_data,[clean_data.shape[0]*clean_data.shape[1],clean_data.shape[2]])
+	# clean_sq2 = np.reshape(clean_data,[clean_data.shape[0]*clean_data.shape[1],clean_data.shape[2]])
+	# clean_sq3 = np.reshape(clean_data,[clean_data.shape[0]*clean_data.shape[1],clean_data.shape[2]])
+	# clean_sq4 = np.reshape(clean_data,[clean_data.shape[0]*clean_data.shape[1],clean_data.shape[2]])
+	# clean_sq5 = np.reshape(clean_data,[clean_data.shape[0]*clean_data.shape[1],clean_data.shape[2]])
 
-	clean_total =[]
+	# clean_total =[]
 
-	clean_total.append(clean_sq1)
-	clean_total.append(clean_sq2)
-	clean_total.append(clean_sq3)
-	clean_total.append(clean_sq4)
-	clean_total.append(clean_sq5)
+	# clean_total.append(clean_sq1)
+	# clean_total.append(clean_sq2)
+	# clean_total.append(clean_sq3)
+	# clean_total.append(clean_sq4)
+	# clean_total.append(clean_sq5)
 
-	clean_total = np.array(clean_total)
+	# clean_total = np.array(clean_total)
 
-	meta_train_clean = clean_total
+	# meta_train_clean = clean_total
 
-	clean_total = np.reshape(clean_total,[clean_total.shape[0]*clean_total.shape[1],clean_total.shape[2]])
+	# clean_total = np.reshape(clean_total,[clean_total.shape[0]*clean_total.shape[1],clean_total.shape[2]])
 
-	shuffle_idx = np.random.permutation(noisy_total.shape[0])
+	# shuffle_idx = np.random.permutation(noisy_total.shape[0])
 
-	noisy_total = noisy_total[shuffle_idx]
-	clean_total = clean_total[shuffle_idx]
+	# noisy_total = noisy_total[shuffle_idx]
+	# clean_total = clean_total[shuffle_idx]
 
-	print(meta_train_noisy.shape)
-	print(meta_train_clean.shape)
+	# print(meta_train_noisy.shape)
+	# print(meta_train_clean.shape)
 
 	
 	dae = Denoise(ae_model,train_lr,meta_lr)
@@ -434,7 +439,8 @@ def main(args):
 	# 	if j%100 == 0:
 	# 		ax1.figure.savefig(plot1_name)
 	
-	
+	meta_train_noisy = np.ones([5,4610,1771])
+	meta_train_clean = np.ones([5,4610,161])
 	train_datapts = 500
 	meta_train_datapts = 500
 	num_iter = 10000		
