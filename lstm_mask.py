@@ -11,6 +11,7 @@ import torch.optim as optim
 from torch.autograd import Variable
 from LoadNoise import LoadData
 from torch.utils.data import DataLoader
+import utils
 
 import matplotlib.pyplot as plt
 
@@ -171,7 +172,8 @@ class Denoise():
 
                 #Get the loss w.r.t the theta_i network
                 self.set_weights(theta_list[t])
-                self.loss = self.criterion(noisy, clean)
+                approx_clean = self.model(noisy) 
+                self.loss = self.criterion(approx_clean, clean)
 
                 # Set the model weights to theta before training
                 #Train with this theta on the D samples
@@ -187,58 +189,10 @@ class Denoise():
 
             print("Average Loss in iteration %s is %1.2f" %(i,combined_loss/num_tasks))
 
-def parse_arguments():
-    # Command-line flags are defined here.
-    parser = argparse.ArgumentParser()
-    parser.add_argument('--num-epochs', dest='num_epochs', type=int,
-                        default=1000, help="Number of epochs to train on.")
-    parser.add_argument('--train_lr', dest='train_lr', type=float,
-                        default=1e-5, help="The training learning rate.")
-    parser.add_argument('--meta_lr', dest='meta_lr', type=float,
-                        default=1e-4, help="The meta-training learning rate.")
-    parser.add_argument('--batch_size', type=int,
-                        default=400, help="Batch size")
-    parser.add_argument('--hidden_size', type=int,
-                        default=500, help="hidden size")
-    parser.add_argument('--clean_dir', type=str, default='TIMIT/TRAIN/', metavar='N',
-                    help='Clean training files')
-    parser.add_argument('--meta_training_file', type=str, default='dataset/meta_data/train/train.txt', metavar='N',
-                    help='meta training text file')
-    parser.add_argument('--reg_training_file', type=str, default='dataset/reg_data/train/train.txt', metavar='N',
-                    help='training text file')
-    parser.add_argument('--model', type=int, default= 0, metavar = 'N',
-                    help='Which model to use - assuming we are testing different architectures')
-    parser.add_argument('--exp_name' ,type=str, default= 'test', metavar = 'N',
-                    help='Name of the experiment/weights saved ')                
-    parser.add_argument('--frame_size' ,type=int, default = 11, metavar = 'N',
-                    help='How many slices we want ')
-    parser.add_argument('--SNR', type=int, default=-10, metavar='N',
-                    help='how much SNR to add to test')
-    parser.add_argument('--noise_type', type=str, default='factory1', metavar='N',
-                    help='type of noise to add to test')
-    parser.add_argument('--clean_dir_test', type=str, default='TIMIT/TEST/', metavar='N',
-                    help='Clean testing files')
-    parser.add_argument('--meta_testing_file', type=str, default='dataset/meta_data/test/train.txt', metavar='N',
-                    help='meta testing text file')
-    parser.add_argument('--reg_testing_file', type=str, default='dataset/reg_data/test/train.txt', metavar='N',
-                    help='testing text file')
-
-    # # https://stackoverflow.com/questions/15008758/parsing-boolean-values-with-argparse
-    # parser_group = parser.add_mutually_exclusive_group(required=False)
-    # parser_group.add_argument('--render', dest='render',
-    #                         action='store_true',
-    #                         help="Whether to render the environment.")
-    # parser_group.add_argument('--no-render', dest='render',
-    #                         action='store_false',
-    #                         help="Whether to render the environment.")
-    # parser.set_defaults(render=False)
-
-    return parser.parse_args()
-
 
 def main(args):
 
-    args = parse_arguments()
+    args = utils.parse_arguments()
     num_epochs = args.num_epochs
     train_lr = args.train_lr
     meta_lr = args.meta_lr
@@ -274,34 +228,14 @@ def main(args):
     ax1 = fig1.gca()
     ax1.set_title('Loss vs Epochs')
 
-    # #one data loader for each SNR
-    # meta_training_data_1 = LoadData(tsv_file=meta_training_file, clean_dir=clean_dir,frame_size = frame_size,SNR=-6,noise=noise_type)
-    # meta_training_data_2 = LoadData(tsv_file=meta_training_file, clean_dir=clean_dir,frame_size = frame_size,SNR=-3,noise=noise_type)
-    # meta_training_data_3 = LoadData(tsv_file=meta_training_file, clean_dir=clean_dir,frame_size = frame_size,SNR=0,noise=noise_type)
-    # meta_training_data_4 = LoadData(tsv_file=meta_training_file, clean_dir=clean_dir,frame_size = frame_size,SNR=3,noise=noise_type)
-    # meta_training_data_5 = LoadData(tsv_file=meta_training_file, clean_dir=clean_dir,frame_size = frame_size,SNR=6,noise=noise_type)
-
-    # reg_training_data = LoadData(tsv_file=reg_training_file,clean_dir=clean_dir,frame_size = frame_size,noise=noise_type)
-
-    # #ACTUAL DATA LOADERS for each meta/reg
-
-    # meta_train_loader_1 = DataLoader(meta_training_data_1,batch_size=batch_size,shuffle=True,num_workers=0)
-    # meta_train_loader_2 = DataLoader(meta_training_data_2,batch_size=batch_size,shuffle=True,num_workers=0)
-    # meta_train_loader_3 = DataLoader(meta_training_data_3,batch_size=batch_size,shuffle=True,num_workers=0)
-    # meta_train_loader_4 = DataLoader(meta_training_data_4,batch_size=batch_size,shuffle=True,num_workers=0)
-    # meta_train_loader_5 = DataLoader(meta_training_data_5,batch_size=batch_size,shuffle=True,num_workers=0)
-
-    # reg_train_loader = DataLoader(reg_training_data,batch_size=batch_size,shuffle=True,num_workers=0)
-    
     noisy_data1 = np.load('spectograms_train30/noise/' + noise_type + '/train/noise_-6.npy')
     noisy_data2 = np.load('spectograms_train30/noise/'+ noise_type + '/train/noise_-3.npy')
     noisy_data3 = np.load('spectograms_train30/noise/' + noise_type + '/train/noise_0.npy')
     noisy_data4 = np.load('spectograms_train30/noise/'+ noise_type + '/train/noise_3.npy')
     noisy_data5 = np.load('spectograms_train30/noise/' + noise_type + '/train/noise_6.npy')
 
-    clean_data = np.load('spectograms_train30/clean/train/clean_frames.npy')
+    clean_data = np.load('spectograms_train30/clean/train/clean_frames_' + noise_type + '.npy')
     
-
     noisy_sq1 = np.reshape(noisy_data1,[noisy_data1.shape[0]*noisy_data1.shape[1],noisy_data1.shape[2],noisy_data1.shape[3]])
     noisy_sq2 = np.reshape(noisy_data2,[noisy_data2.shape[0]*noisy_data2.shape[1],noisy_data2.shape[2],noisy_data2.shape[3]])
     noisy_sq3 = np.reshape(noisy_data3,[noisy_data3.shape[0]*noisy_data3.shape[1],noisy_data3.shape[2],noisy_data3.shape[3]])
@@ -318,49 +252,33 @@ def main(args):
     noisy_total.extend(noisy_sq5)
     
     noisy_total = np.array(noisy_total)
-    #noisy_total = np.reshape(noisy_total,[noisy_total.shape[0]*noisy_total.shape[1],noisy_total.shape[2]])
-    
     print(noisy_total.shape)
 
     clean_sq1 = np.reshape(clean_data,[clean_data.shape[0]*clean_data.shape[1],clean_data.shape[2],clean_data.shape[3]])
-    clean_sq2 = np.reshape(clean_data,[clean_data.shape[0]*clean_data.shape[1],clean_data.shape[2],clean_data.shape[3]])
-    clean_sq3 = np.reshape(clean_data,[clean_data.shape[0]*clean_data.shape[1],clean_data.shape[2],clean_data.shape[3]])
-    clean_sq4 = np.reshape(clean_data,[clean_data.shape[0]*clean_data.shape[1],clean_data.shape[2],clean_data.shape[3]])
-    clean_sq5 = np.reshape(clean_data,[clean_data.shape[0]*clean_data.shape[1],clean_data.shape[2],clean_data.shape[3]])
 
     clean_total =[]
 
     clean_total.extend(clean_sq1)
-    clean_total.extend(clean_sq2)
-    clean_total.extend(clean_sq3)
-    clean_total.extend(clean_sq4)
-    clean_total.extend(clean_sq5)
+    clean_total.extend(clean_sq1)
+    clean_total.extend(clean_sq1)
+    clean_total.extend(clean_sq1)
+    clean_total.extend(clean_sq1)
 
     clean_total = np.array(clean_total)
-    #clean_total = np.reshape(clean_total,[clean_total.shape[0]*clean_total.shape[1],clean_total.shape[2]])
     print(clean_total.shape)
-    """
-    print(clean_total.shape)
-    shuffle_idx = np.random.permutation(noisy_total.shape[0])
-
-    noisy_total = noisy_total[shuffle_idx]
-    clean_total = clean_total[shuffle_idx]
-
-    print(noisy_total.shape)
-    print(clean_total.shape)
-    """
-    
+   
     dae = Denoise(model,train_lr,meta_lr)
 
-    path_name = './figures/train_plots'
-    str_path1 = 'training_loss_normal_mask_lstm_total.png'
+    path_name = './figures/train_plots/' + noise_type + '/'
+    str_path1 = 'training_loss_normal_mask_lstm_total_' + exp_name + '.png'
     plot1_name = os.path.join(path_name,str_path1)
 
-    model_path = 'models/lstm_mask_normal_train/noise_total'
+    model_path = 'models/lstm_mask_normal_train/' + noise_type
 
+    print(model_path)
+    
     if not os.path.exists(path_name):
         os.makedirs(path_name)
-
     if not os.path.exists(model_path):
         os.makedirs(model_path)
 
