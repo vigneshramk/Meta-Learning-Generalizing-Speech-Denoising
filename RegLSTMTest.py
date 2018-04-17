@@ -84,7 +84,7 @@ if not os.path.exists('results/'):
 
 output_path = 'results/' + 'logfile_' + noise_type + '_' + noise_snr + '_' + exp_name + '.txt'
 with open(output_path,'a') as f:
-    f.write(model_load_path + '\n' + noise_snr +  '\n' + noise_snr + '\n')
+    f.write(model_load_path + '\n' + noise_type +  '\n' + noise_snr + '\n')
 
 
    
@@ -100,27 +100,17 @@ for i, batch in enumerate(test_loader):
     #get the clean magnitudes and the noise magnitude at the specific SNR
     clean_mag = batch['clean_mag'].numpy()
     noise_mag = batch['noise_mag'].numpy()
+    noise_audio = batch['noise_audio'].numpy()
 
     approx_clean_mag, mse = test_mask(model, clean_mag, noise_mag)
     
-    ### WOULD PASS THROUGH approx_clean_mag into reconstruct.
-    ### RETURNS Approx_clean_audio
-    ### this is just for testing
-    #approx_clean_audio = utils.reconstruct_clean(noise_audio, approx_clean_mag)
-    #approx_clean_name =test_file_path + 'approx_clean_' + noise_snr + '_' + exp_name + '.WAV'
-    #print('approx clean audio length') 
-#    print(approx_clean_audio.shape)
-    if save_audio:
+    if save_audio or i == 5:
         print('saving audio...')
-        #wavfile.write(approx_clean_name, 16000,approx_clean_audio)
-   #     wavfile.write(full_audio_clean_name,16000,clean_audio_new)
-   #     wavfile.write(full_audio_noise_name,16000,noise_audio_new)
-        #np.save(test_file_path + 'approx_clean_mag_' + noise_snr + '_' + exp_name + '.npy', approx_clean_mag)
-        #with open('log_' + test_load_path + noise_snr + '_' + exp_name + '.txt','a') as f:
-        #    f.write(full_audio_clean_name + '\t' + full_audio_noise_name + '\n')
-        #    f.write(full_audio_clean_name + '\t' + approx_clean_name + '\n' )
-     
-    # logging the scores
+        reshaped = np.reshape(approx_clean_mag,(approx_clean_mag.shape[0],approx_clean_mag.shape[1]))
+        noise_audio = np.reshape(noise_audio,(noise_audio.shape[1]))
+        reconstruct_approx = utils.reconstruct_clean(noise_audio, reshaped)
+        wavfile.write('results/approx_' + noise_type + '_' + noise_snr + '_' + exp_name + '.WAV', 16000, reconstruct_approx)
+        wavfile.write('results/actual_' + noise_type + '_' + noise_snr + '.WAV', 16000, noise_audio)
 
     """
     time.sleep(5)
@@ -149,11 +139,12 @@ print(noise_snr)
 #print('Mean Noise PESQ Score %f' % np.mean(PESQ_Noise))
 #print('Mean Approx PESQ Score %f' % np.mean(PESQ_Approx))
 print('Mean MSE Score %f' % np.mean(MSE))
-print('Minimum mse %d' %np.argmin(MSE))        
-print('Max mse %d' % np.argmax(MSE))
+print('Minimum mse %d' %np.min(MSE))        
+print('Max mse %d' % np.max(MSE))
+print('Variance mse %f' % np.var(MSE))
 
 with open(output_path,'a') as f:
-    f.write(str(np.mean(MSE))+ '\n' + str(np.argmin(MSE)) + '\n' + str(np.argmax(MSE)) + '\n')
+    f.write(str(np.mean(MSE))+ '\n' + str(np.min(MSE)) + '\n' + str(np.max(MSE)) + '\n' + str(np.var(MSE)))
 
     ###pass approx_clean_audio,clean_audio,noise_audio,clean_mag,noise_mag,approx_clean_mag into function
     ### returns all the scores: PESQ,STOI,SDR anythiniiiiig
