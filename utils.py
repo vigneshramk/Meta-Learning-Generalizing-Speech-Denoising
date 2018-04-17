@@ -89,7 +89,7 @@ def parse_arguments():
 					help='Clean testing files')
 	parser.add_argument('--meta_testing_file', type=str, default='dataset/meta_data/test/train.txt', metavar='N',
 					help='meta testing text file')
-	parser.add_argument('--reg_testing_file', type=str, default='dataset/reg_data/test/train.txt', metavar='N',
+	parser.add_argument('--train_all' ,type=int, default=0, metavar='N',
 					help='testing text file')
 
 	# # https://stackoverflow.com/questions/15008758/parsing-boolean-values-with-argparse

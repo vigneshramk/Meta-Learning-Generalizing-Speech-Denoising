@@ -240,7 +240,7 @@ def main(args):
     ax1 = fig1.gca()
     ax1.set_title('Loss vs Epochs')
 
-    if train_all:
+    if train_all == 1:
         print('Training All....')
         all_noise = ['babble','factory1','engine']
         file_name = 'all_train'
@@ -294,7 +294,7 @@ def main(args):
     dae = Denoise(model,train_lr,meta_lr)
 
     path_name = './figures/train_plots/' + file_name + '/'
-    str_path1 = 'training_loss_normal_mask_lstm_total_' + file_name + '.png'
+    str_path1 = 'training_loss_normal_mask_lstm_total_' + exp_name + '.png'
     plot1_name = os.path.join(path_name,str_path1)
 
     model_path = 'models/lstm_mask_normal_train/' + file_name
