@@ -12,8 +12,9 @@ from torch.autograd import Variable
 from LoadNoise import LoadData
 from torch.utils.data import DataLoader
 import utils
-
 import matplotlib.pyplot as plt
+
+from adam_new import Adam_Custom
 
 use_cuda = torch.cuda.is_available()
 
@@ -57,7 +58,9 @@ class Denoise():
 
         self.criterion = nn.MSELoss()
         self.optimizer = torch.optim.Adam(self.model.parameters(), lr=train_lr)
-        self.meta_optimizer = torch.optim.Adam(self.model.parameters(), lr=meta_lr)
+        # self.meta_optimizer = torch.optim.Adam(self.model.parameters(), lr=meta_lr)
+
+        self.meta_optimizer = Adam_Custom(self.model.parameters(), lr=meta_lr)
 
     def get_weights(self):
 
@@ -173,16 +176,23 @@ class Denoise():
 
                 #Get the loss w.r.t the theta_i network
                 self.set_weights(theta_list[t])
-                approx_clean = self.model(noisy) 
-                self.loss = self.criterion(approx_clean, clean)
+                approx_clean = self.model(noisy)
+                self.loss_outer = self.criterion(approx_clean, clean)
 
                 # Set the model weights to theta before training
                 #Train with this theta on the D samples
-                self.set_weights(theta)
                 self.meta_optimizer.zero_grad()
-                self.loss.backward()
-                self.meta_optimizer.step()
+                grads = torch.autograd.grad(self.loss_outer, self.model.parameters())
+                #Pass the gradients directly to the Custom Adam optimizer
+                self.meta_optimizer.step(grads)
+            
+                
+                # self.set_weights(theta)
+                # self.meta_optimizer.zero_grad()
+                # self.loss.backward()
+                # self.meta_optimizer.step()
 
+                # Theta will now have the updated parameters
                 theta = self.get_weights()
 
                 #Add up the losses from each of these networks
