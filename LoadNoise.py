@@ -9,42 +9,7 @@ import librosa.display
 import librosa.core
 import random
 
-"""
 
-Gated recurrent network mask estiamtion
-
-class GRU(nn.Module):
-	def __init__(self, input_channels, hidden_units, hidden_layers, output_channels,bi):
-		super(GRU, self).__init__()
-		self.hidden_units = hidden_units
-		self.hidden_layers = hidden_layers
-		self.input_channels = input_channels
-		self.output_channels = output_channels
-		if bi:
-			print('Model is Bi Directional')
-			self.mult = 2
-		else:
-			self.mult = 1
-
-		self.gru = nn.GRU(input_channels, hidden_units, hidden_layers, batch_first=True, bidirectional=bi)
-		self.fc = nn.Linear(hidden_units * self.mult, output_channels)
-
-
-	def forward(self, x):
-
-		h0 = Variable(torch.zeros(self.hidden_layers * 2, x.size(0), self.hidden_units).type(Tensor))
-		self.gru.flatten_parameters()
-
-		#test = self.conv1(x)
-		#print(test.size())
-		
-		out, _ = self.gru(x, h0)
-		#print(out.size())
-		output = F.sigmoid(self.fc(out))
-		output = output.squeeze(0)
-
-		return output
-"""
 
 class LoadData(Dataset):
     def __init__(self, tsv_file, clean_dir, features=None, num_spectograms=30,single_frame=True,
@@ -68,8 +33,8 @@ class LoadData(Dataset):
         self.clean_dir = clean_dir
         self.frame_size = frame_size
         self.num_spectograms = num_spectograms
-        self.single_frame = single_frame
-        self.middle = int((frame_size - 1)/2)
+        #self.single_frame = single_frame
+        #self.middle = int((frame_size - 1)/2)
 
     def __len__(self):
         return len(self.wav)
@@ -91,10 +56,10 @@ class LoadData(Dataset):
         #If snr is None, read from the file
         #if noise is None, read from the file
         #else it is a parameter to dataloader
-        if self.snr is None:
-            self.snr = [float(self.wav[idx][1])]
-        if self.noise is None:
-            self.noise = self.wav[idx][2]
+        #if self.snr is None:
+        #    self.snr = [float(self.wav[idx][1])]
+       #if self.noise is None:
+        #    self.noise = self.wav[idx][2]
 
         #adding different noise types
         if self.noise == 'babble':
@@ -107,17 +72,19 @@ class LoadData(Dataset):
             [noise_add, noise_fs] = librosa.load('noise/factory1_train.wav', self.fs)
 
         #creating the spectogram tensor that depends on how many SNR levels to add 
-        flatten_length = (self.n_fft/2 + 1) * self.frame_size
+        #flatten_length = (self.n_fft/2 + 1) * self.frame_size
 
 
-        flatten_noise_spectograms = np.zeros((self.num_spectograms, int(flatten_length), len(self.snr)))
+        #flatten_noise_spectograms = np.zeros((self.num_spectograms, int(flatten_length), len(self.snr)))
 
-        if self.single_frame:
-            flatten_clean_spectograms = np.zeros((self.num_spectograms, int(self.n_fft/2+1) , len(self.snr)))
+        #if self.single_frame:
+        #    flatten_clean_spectograms = np.zeros((self.num_spectograms, int(self.n_fft/2+1) , len(self.snr)))
 
-        else:
-            flatten_clean_spectograms = np.zeros((self.num_spectograms, int(flatten_length), len(self.snr)))
+        #else:
+        #    flatten_clean_spectograms = np.zeros((self.num_spectograms, int(flatten_length), len(self.snr)))
 
+        flatten_noise_spectograms = np.zeros((self.num_spectograms, self.frame_size, int(self.n_fft/2 + 1), len(self.snr)))
+        flatten_clean_spectograms = np.zeros((self.num_spectograms, self.frame_size, int(self.n_fft/2 + 1))) 
         #loop through SNR array 
         for s in range(len(self.snr)):
             snr_level = self.snr[s]
@@ -148,13 +115,13 @@ class LoadData(Dataset):
                     # which means (num_spectogram) gives you a dimxtotal_noise size matrix and each column should be the same for each spectogram window
                     magC_Crop = magC[:,start:start + self.frame_size]
 
-                    if self.single_frame:
+                    #if self.single_frame:
                     
-                        magC_Crop = magC_Crop[:,self.middle]
+                    #    magC_Crop = magC_Crop[:,self.middle]
                 
 
-                    flatten_magC = magC_Crop.flatten()
-                    flatten_clean_spectograms[num]= np.reshape(flatten_magC,(len(flatten_magC),1))
+                    #flatten_magC = magC_Crop.flatten()
+                    flatten_clean_spectograms[num]= np.transpose(magC_Crop )#np.reshape(flatten_magC,(len(flatten_magC),1))
                 
 
             for num, start in enumerate(starts):
@@ -167,11 +134,11 @@ class LoadData(Dataset):
                 magN_Crop = magN[:,start:start + self.frame_size]
 
                 #flatten spectogram 
-                flatten_magN = magN_Crop.flatten()
+                #flatten_magN = magN_Crop.flatten()
 
                 #adding it to the spectograms. will be size (flatten_length,# of SNR)
                 #add the same clean flatten spectograms for each dimension
-                flatten_noise_spectograms[num][:,s] = flatten_magN
+                flatten_noise_spectograms[num][:,:,s] = np.transpose(magN_Crop)
 
         # np.save('spectograms/noise/multiple_noise/noise_' + str(idx) + '.npy', flatten_noise_spectograms)
         # np.save('spectograms/clean/single_frame/clean_' + str(idx) + '.npy', flatten_clean_spectograms)

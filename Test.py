@@ -7,6 +7,8 @@ import os
 parser = argparse.ArgumentParser()
 parser.add_argument('--data_path', type=str,
 						default='TIMIT/TRAIN', help="path for the data")
+parser.add_argument('--noise_type', type=str,
+						default='babble', help="path for the data")
 
 
 #JUST TO TEST THINGS OUT
@@ -29,16 +31,16 @@ parser.add_argument('--data_path', type=str,
 #same tsv_file since we are telling it what noise/snr to add 
 args = parser.parse_args()
 data_path = args.data_path
+noise_type = args.noise_type
+
 noise_snr =[-6,-3,0,3,6] 
-meta_training_data = LoadData(tsv_file='dataset/meta_data/train/train.txt', clean_dir=data_path,SNR=noise_snr,noise='babble')
-reg_training_data = LoadData(tsv_file='dataset/meta_data/train/train.txt', clean_dir=data_path,SNR=[6],noise='babble')
+meta_training_data = LoadData(tsv_file='dataset/meta_data/train/train.txt', clean_dir=data_path,SNR=noise_snr,noise=noise_type)
 
 #dataloaders
 #4610
 meta_train_loader = DataLoader(meta_training_data,batch_size=4610,shuffle=True,num_workers=0)
-reg_train_loader = DataLoader(reg_training_data,batch_size=1,shuffle=True,num_workers=0) 
 
-path1_name = './spectograms_train30/noise/train'
+path1_name = './spectograms_train30/noise/' + noise_type + '/train'
 if not os.path.exists(path1_name):
         os.makedirs(path1_name)
 
@@ -59,58 +61,10 @@ for i,batch in enumerate(meta_train_loader):
     break
     
 print('done...')
-print(clean[:,:,:,0].shape)
-np.save('spectograms_train/clean/train/clean_single'  + '.npy', clean[:,:,:,0])
+print(clean.shape)
+np.save('spectograms_train30/clean/train/clean_frames_' + noise_type  + '.npy', clean)
 for s, snr in enumerate(noise_snr):
     print(snr)
-    print(noise[:,:,:,s].shape)
-    np.save('spectograms_train/noise/train/noise_'+ str(snr) + '.npy', noise[:,:,:,s])
+    print(noise[:,:,:,:,s].shape)
+    np.save('spectograms_train30/noise/' + noise_type + '/train/noise_'+ str(snr) + '.npy', noise[:,:,:,:,s])
     
-#saves each file as (Num_audiofiles,spect_per_audio,feature_dimensions * num_frames)
-#should be one for each noise type
-#only one for clean
-
-
-
-
-
-
-
-   
-    
-    
-
-#for i,batch in enumerate(reg_train_loader):
-    #print('regular batch')
-   
-    
-
-
-"""
-
-num_spectograms = 3
-
-full_clean_spectograms = None
-full_noise_spectograms = None
-
-for s in range(num_spectograms):
-    for i,batch in enumerate(train_loader):
-        clean = batch['clean_mag']
-        noise = batch['noise_mag']
-        
-        if full_clean_spectograms is None:
-            full_clean_spectograms = clean
-            full_noise_spectograms = noise
-        else:
-            print(full_clean_spectograms.shape)
-            print(clean.shape)
-            full_clean_spectograms = np.concatenate([full_clean_spectograms,clean])
-            full_noise_spectograms = np.concatenate([full_noise_spectograms,noise])
-        break
-
-
-print(full_clean_spectograms.shape)
-print(full_noise_spectograms.shape)
-
-    
-"""
