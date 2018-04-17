@@ -10,8 +10,9 @@ from torch.autograd import Variable
 #from torch.distributions import Categorical
 from LoadNoise import LoadData
 from torch.utils.data import DataLoader
-
 import matplotlib.pyplot as plt
+
+from adam_new import Adam_Custom
 
 def np_to_variable(x, requires_grad=False, dtype=torch.FloatTensor):
 	v = Variable(torch.from_numpy(x).type(dtype), requires_grad=requires_grad)
@@ -96,7 +97,7 @@ class Denoise():
 
 		self.criterion = nn.MSELoss()
 		self.optimizer = torch.optim.Adam(self.model.parameters(), lr=train_lr)
-		self.meta_optimizer = torch.optim.Adam(self.model.parameters(), lr=meta_lr)
+		self.meta_optimizer = Adam_Custom(self.model.parameters(), lr=meta_lr)
 
 	def get_weights(self):
 
@@ -162,89 +163,92 @@ class Denoise():
 
 	def train_maml(self,meta_train_noisy,meta_train_clean,train_datapts,meta_train_datapts,num_iter):
 
-		num_tasks,num_data,num_features, = meta_train_noisy.shape
+        num_tasks,num_data,num_features = meta_train_noisy.shape
 
-		K = train_datapts
-		D = meta_train_datapts
+        K = train_datapts
+        D = meta_train_datapts
 
-		theta_list = []
+        theta_list = []
 
-		for i in range(num_iter):
+        for i in range(num_iter):
 
-			# Get the theta
-			if i == 0:
-				theta= self.get_weights()
+            # Get the theta
+            if i == 0:
+                theta= self.get_weights()
 
-			# Individual gradient updates theta_i's ---Training mode
-			for t in range(num_tasks):
+            # Individual gradient updates theta_i's ---Training mode
+            for t in range(num_tasks):
 
-				#Sample K datapoints from the task t
-				idx_train = np.random.randint(num_data,size=K)
+                #Sample K datapoints from the task t
+                idx_train = np.random.randint(num_data,size=K)
 
-				noisy = meta_train_noisy[t,idx_train,:]
-				clean = meta_train_clean[t,idx_train,:]
+                noisy = meta_train_noisy[t,idx_train,:]
+                clean = meta_train_clean[t,idx_train,:]
 
-				noisy = np_to_variable(noisy, requires_grad=True)
-				clean = np_to_variable(clean, requires_grad=False)
+                noisy = np_to_variable(noisy, requires_grad=True)
+                clean = np_to_variable(clean, requires_grad=False)
 
-				output1 = self.model(noisy)
+                output1 = self.model(noisy)
 
-				# Initialize the network with current network weights
-				self.set_weights(theta)
+                # Initialize the network with current network weights
+                self.set_weights(theta)
 
-				# Train the network with the given K samples
-				self.loss = self.criterion(output1, clean)
-				self.optimizer.zero_grad()
-				self.loss.backward()
-				self.optimizer.step()
+                # Train the network with the given K samples
+                self.loss = self.criterion(output1, clean)
+                self.optimizer.zero_grad()
+                self.loss.backward()
+                self.optimizer.step()
 
-				#Update params theta_i
-				if i == 0:
-					theta_list.append(self.get_weights())
-				else:
-					theta_list[t] = self.get_weights()
+                #Update params theta_i
+                if i == 0:
+                    theta_list.append(self.get_weights())
+                else:
+                    theta_list[t] = self.get_weights()
 
 
-			# Theta parameter update --- Meta-training mode
-			combined_loss = 0   
-			for t in range(num_tasks):
+            # Theta parameter update --- Meta-training mode
+            combined_loss = 0   
+            for t in range(num_tasks):
 
-				#Sample K datapoints from the task t
-				idx_meta = np.random.randint(num_data,size=D)
+                #Sample K datapoints from the task t
+                idx_meta = np.random.randint(num_data,size=D)
 
-				noisy = meta_train_noisy[t,idx_meta,:]
-				clean = meta_train_clean[t,idx_meta,:]
+                noisy = meta_train_noisy[t,idx_meta,:]
+                clean = meta_train_clean[t,idx_meta,:]
 
-				noisy = np_to_variable(noisy, requires_grad=True)
-				clean = np_to_variable(clean, requires_grad=False)
+                noisy = np_to_variable(noisy, requires_grad=True)
+                clean = np_to_variable(clean, requires_grad=False)
 
-				output2 = self.model(noisy)
+                # output2 = self.model(noisy)
 
-				#Get the loss w.r.t the theta_i network
-				self.set_weights(theta_list[t])
-				
-				self.loss_outer = F.mse_loss(output2, clean)
+                #Get the loss w.r.t the theta_i network
+                self.set_weights(theta_list[t])
+                approx_clean = self.model(noisy)
+                self.loss_outer = self.criterion(approx_clean, clean)
 
-				grads = torch.autograd.grad(self.loss_outer, self.model.parameters(),retain_graph=True)
+                # Set the model weights to theta before training
+                #Train with this theta on the D samples
+                self.meta_optimizer.zero_grad()
+                grads = torch.autograd.grad(self.loss_outer, self.model.parameters())
+                #Pass the gradients directly to the Custom Adam optimizer
+                self.meta_optimizer.step(grads)
+            
+                
+                # self.set_weights(theta)
+                # self.meta_optimizer.zero_grad()
+                # self.loss.backward()
+                # self.meta_optimizer.step()
 
-				new_weights = [(param - 1e-4*grad) for (param,grad) in zip(self.model.parameters(),grads)]
+                # Theta will now have the updated parameters
+                theta = self.get_weights()
 
-				# print(theta.items())
+                #Add up the losses from each of these networks
+                combined_loss += self.loss.data[0]
 
-				# Set the model weights to theta before training
-				#Train with this theta on the D samples
-				# self.set_weights(new_weights)
-				self.meta_optimizer.zero_grad()
-				self.loss_outer.backward(grads)
-				self.meta_optimizer.step()
+            print("Average Loss in iteration %s is %1.2f" %(i,combined_loss/num_tasks))
 
-				theta = self.get_weights()
 
-				#Add up the losses from each of these networks
-				combined_loss += self.loss.data[0]
-
-			print("Average Loss in iteration %s is %1.2f" %(i,combined_loss/num_tasks))
-
+	
 def parse_arguments():
 	# Command-line flags are defined here.
 	parser = argparse.ArgumentParser()
