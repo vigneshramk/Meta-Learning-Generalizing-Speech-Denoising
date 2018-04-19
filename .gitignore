@@ -1,5 +1,8 @@
 TIMIT/
 metrics/PESQ/conform
+results/
+__pycache__/
+spectograms/
 
 *.tar.gz
 *.pyc

@@ -43,17 +43,15 @@ noise_snr =[-6,-3,0,3,6]
 meta_training_data = LoadData(tsv_file='dataset/meta_data/train/train.txt', clean_dir=data_path,SNR=noise_snr,noise=noise_type,num_spectograms=num_spectograms)
 
 #dataloaders
-#4610
 meta_train_loader = DataLoader(meta_training_data,batch_size=4610,shuffle=True,num_workers=0)
 
-path1_name = './spectograms_train' + str(num_spectograms) + '/noise/' + noise_type + '/train'
+path1_name = './spectograms/spectograms_train' + str(num_spectograms) + '/noise/' + noise_type + '/train'
 if not os.path.exists(path1_name):
         os.makedirs(path1_name)
 
-path2_name = './spectograms_train' + str(num_spectograms) + '/clean/train'
+path2_name = './spectograms/spectograms_train' + str(num_spectograms) + '/clean/train'
 if not os.path.exists(path2_name):
         os.makedirs(path2_name)
-
 
 #looping through the dataloader. Pytorch dataloader automatically randomizes the batches and gives u a new batch each iteration
 
@@ -68,9 +66,9 @@ for i,batch in enumerate(meta_train_loader):
     
 print('done...')
 print(clean.shape)
-np.save('spectograms_train' + str(num_spectograms) + '/clean/train/clean_frames_' + noise_type  + '.npy', clean)
+np.save('spectograms/spectograms_train' + str(num_spectograms) + '/clean/train/clean_frames_' + noise_type  + '.npy', clean)
 for s, snr in enumerate(noise_snr):
     print(snr)
     print(noise[:,:,:,:,s].shape)
-    np.save('spectograms_train' + str(num_spectograms) + '/noise/' + noise_type + '/train/noise_'+ str(snr) + '.npy', noise[:,:,:,:,s])
+    np.save('spectograms/spectograms_train' + str(num_spectograms) + '/noise/' + noise_type + '/train/noise_'+ str(snr) + '.npy', noise[:,:,:,:,s])
     

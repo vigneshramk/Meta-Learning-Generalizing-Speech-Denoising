@@ -262,13 +262,13 @@ def main(args):
 
         for n in all_noise:
             print(n)
-            noisy_data1 = np.load('spectograms_train'+str(num_spect)+'/noise/' + n + '/train/noise_-6.npy')
-            noisy_data2 = np.load('spectograms_train'+str(num_spect)+'/noise/'+ n + '/train/noise_-3.npy')
-            noisy_data3 = np.load('spectograms_train'+str(num_spect)+'/noise/' + n + '/train/noise_0.npy')
-            noisy_data4 = np.load('spectograms_train'+str(num_spect)+'/noise/'+ n + '/train/noise_3.npy')
-            noisy_data5 = np.load('spectograms_train'+str(num_spect)+'/noise/' + n + '/train/noise_6.npy')
+            noisy_data1 = np.load('spectograms/spectograms_train'+str(num_spect)+'/noise/' + n + '/train/noise_-6.npy')
+            noisy_data2 = np.load('spectograms/spectograms_train'+str(num_spect)+'/noise/'+ n + '/train/noise_-3.npy')
+            noisy_data3 = np.load('spectograms/spectograms_train'+str(num_spect)+'/noise/' + n + '/train/noise_0.npy')
+            noisy_data4 = np.load('spectograms/spectograms_train'+str(num_spect)+'/noise/'+ n + '/train/noise_3.npy')
+            noisy_data5 = np.load('spectograms/spectograms_train'+str(num_spect)+'/noise/' + n + '/train/noise_6.npy')
 
-            clean_data = np.load('spectograms_train'+str(num_spect)+'/clean/train/clean_frames_' + n + '.npy')
+            clean_data = np.load('spectograms/spectograms_train'+str(num_spect)+'/clean/train/clean_frames_' + n + '.npy')
         
             noisy_sq1 = np.reshape(noisy_data1,[noisy_data1.shape[0]*noisy_data1.shape[1],noisy_data1.shape[2],noisy_data1.shape[3]])
             noisy_sq2 = np.reshape(noisy_data2,[noisy_data2.shape[0]*noisy_data2.shape[1],noisy_data2.shape[2],noisy_data2.shape[3]])
@@ -382,13 +382,13 @@ def main(args):
             noisy_total = []
             clean_total = []
 
-            noisy_data1 = np.load('spectograms_train'+str(num_spect)+'/noise/' + n + '/train/noise_-6.npy')
-            noisy_data2 = np.load('spectograms_train'+str(num_spect)+'/noise/'+ n + '/train/noise_-3.npy')
-            noisy_data3 = np.load('spectograms_train'+str(num_spect)+'/noise/' + n + '/train/noise_0.npy')
-            noisy_data4 = np.load('spectograms_train'+str(num_spect)+'/noise/'+ n + '/train/noise_3.npy')
-            noisy_data5 = np.load('spectograms_train'+str(num_spect)+'/noise/' + n + '/train/noise_6.npy')
+            noisy_data1 = np.load('spectograms/spectograms_train'+str(num_spect)+'/noise/' + n + '/train/noise_-6.npy')
+            noisy_data2 = np.load('spectograms/spectograms_train'+str(num_spect)+'/noise/'+ n + '/train/noise_-3.npy')
+            noisy_data3 = np.load('spectograms/spectograms_train'+str(num_spect)+'/noise/' + n + '/train/noise_0.npy')
+            noisy_data4 = np.load('spectograms/spectograms_train'+str(num_spect)+'/noise/'+ n + '/train/noise_3.npy')
+            noisy_data5 = np.load('spectograms/spectograms_train'+str(num_spect)+'/noise/' + n + '/train/noise_6.npy')
 
-            clean_data = np.load('spectograms_train'+str(num_spect)+'/clean/train/clean_frames_' + n + '.npy')
+            clean_data = np.load('spectograms/spectograms_train'+str(num_spect)+'/clean/train/clean_frames_' + n + '.npy')
         
             noisy_sq1 = np.reshape(noisy_data1,[noisy_data1.shape[0]*noisy_data1.shape[1],noisy_data1.shape[2],noisy_data1.shape[3]])
             noisy_sq2 = np.reshape(noisy_data2,[noisy_data2.shape[0]*noisy_data2.shape[1],noisy_data2.shape[2],noisy_data2.shape[3]])
