@@ -14,6 +14,8 @@ import matplotlib.pyplot as plt
 
 from adam_new import Adam_Custom
 
+from clip_grad_norm import clip_grad_norm_
+
 def np_to_variable(x, requires_grad=False, dtype=torch.FloatTensor):
 	v = Variable(torch.from_numpy(x).type(dtype), requires_grad=requires_grad)
 	if torch.cuda.is_available():
@@ -35,16 +37,16 @@ class Auto(nn.Module):
 		super(Auto, self).__init__()
 		self.hidden_size = 1600
 		#self.hidden2_size = 750
-        #change it to what the paper had. 3 hidden layers 1600
-        #but they normlized data and use log magnitude. 
-        #got the perfect hidden size and units by cross validation
+		#change it to what the paper had. 3 hidden layers 1600
+		#but they normlized data and use log magnitude. 
+		#got the perfect hidden size and units by cross validation
 		self.classifier = nn.Sequential(
 						  nn.Linear(input_size, self.hidden_size),
 						  nn.ReLU(inplace=True),
 						  nn.Linear(self.hidden_size, self.hidden_size),
 						  nn.ReLU(inplace=True),
-                          nn.Linear(self.hidden_size, self.hidden_size),
-                          nn.ReLU(inplace=True),
+						  nn.Linear(self.hidden_size, self.hidden_size),
+						  nn.ReLU(inplace=True),
 						  nn.Linear(self.hidden_size, output_size))
 
 	def forward(self, x):
@@ -57,16 +59,16 @@ class Mask(nn.Module):
 		super(Mask, self).__init__()
 		self.hidden_size = 1600
 		#self.hidden2_size = 750
-        #change it to what the paper had. 3 hidden layers 1600
-        #but they normlized data and use log magnitude. 
-        #got the perfect hidden size and units by cross validation
+		#change it to what the paper had. 3 hidden layers 1600
+		#but they normlized data and use log magnitude. 
+		#got the perfect hidden size and units by cross validation
 		self.classifier = nn.Sequential(
 						  nn.Linear(input_size, self.hidden_size),
 						  nn.ReLU(inplace=True),
 						  nn.Linear(self.hidden_size, self.hidden_size),
 						  nn.ReLU(inplace=True),
-                          nn.Linear(self.hidden_size, self.hidden_size),
-                          nn.ReLU(inplace=True),
+						  nn.Linear(self.hidden_size, self.hidden_size),
+						  nn.ReLU(inplace=True),
 						  nn.Linear(self.hidden_size, output_size))
 
 	def forward(self, x):
@@ -99,6 +101,7 @@ class Denoise():
 		self.optimizer = torch.optim.Adam(self.model.parameters(), lr=train_lr)
 		self.meta_optimizer = Adam_Custom(self.model.parameters(), lr=meta_lr)
 
+
 	def get_weights(self):
 
 		curr_model = {'state_dict': self.model.state_dict()}
@@ -111,8 +114,8 @@ class Denoise():
 		#                  # 'optimizer': self.meta_optimizer.state_dict()}
 		return curr_model
 
-	def grad_reverse(grad):
-        return grad.clone() * -1
+	# def grad_reverse(grad):
+ #        return grad.clone() * -1
 	
 	def set_weights(self,curr_model):
 
@@ -127,6 +130,9 @@ class Denoise():
 		
 	def train_normal(self,noisy,clean,j,i,model_path):
 
+		def grad_reverse(grad):
+			return grad.clone()*-1
+
 
 		noisy_th = np_to_variable(noisy)
 		clean_th = np_to_variable(clean)
@@ -135,24 +141,40 @@ class Denoise():
 
 		#mask = mask_th.data.cpu().numpy()
 
-		noisy_middle = noisy_th[:,161*5:161*6]
+		# noisy_middle = noisy_th[:,161*5:161*6]
 
-		output = noisy_middle*mask_th
+		output = mask_th
 
 		# output = np_to_variable(output,requires_grad=True)
-		
 
 		self.loss = self.criterion(output, clean_th)
+
+		grads = torch.autograd.grad(self.loss, self.model.parameters(),retain_graph=True)
+
+		meta_grads = {name:g for ((name, _), g) in zip(self.model.named_parameters(), grads)}
+
+		hooks = []
+		for (k,v) in self.model.named_parameters():
+			def get_closure():
+				key = k
+				def replace_grad(grad):
+					return meta_grads[key]
+				return replace_grad
+			hooks.append(v.register_hook(get_closure()))
+		
 		self.optimizer.zero_grad()
 		self.loss.backward()
 		self.optimizer.step()
 
+		for h in hooks:
+			h.remove()
+
 		if j%50==0 and i==0:
 
 			state = {
-			    'epoch': j,
-			    'state_dict': self.model.state_dict(),
-			    'optimizer': self.optimizer.state_dict(),
+				'epoch': j,
+				'state_dict': self.model.state_dict(),
+				'optimizer': self.optimizer.state_dict(),
 			}
 			str_path = model_path + '/model_auto' + '.h5'
 			torch.save(state,str_path)
@@ -163,89 +185,90 @@ class Denoise():
 
 	def train_maml(self,meta_train_noisy,meta_train_clean,train_datapts,meta_train_datapts,num_iter):
 
-        num_tasks,num_data,num_features = meta_train_noisy.shape
+		num_tasks,num_data,num_features = meta_train_noisy.shape
 
-        K = train_datapts
-        D = meta_train_datapts
+		K = train_datapts
+		D = meta_train_datapts
 
-        theta_list = []
+		theta_list = []
 
-        for i in range(num_iter):
+		for i in range(num_iter):
 
-            # Get the theta
-            if i == 0:
-                theta= self.get_weights()
+			# Get the theta
+			if i == 0:
+				theta= self.get_weights()
 
-            # Individual gradient updates theta_i's ---Training mode
-            for t in range(num_tasks):
+			# Individual gradient updates theta_i's ---Training mode
+			for t in range(num_tasks):
 
-                #Sample K datapoints from the task t
-                idx_train = np.random.randint(num_data,size=K)
+				#Sample K datapoints from the task t
+				idx_train = np.random.randint(num_data,size=K)
 
-                noisy = meta_train_noisy[t,idx_train,:]
-                clean = meta_train_clean[t,idx_train,:]
+				noisy = meta_train_noisy[t,idx_train,:]
+				clean = meta_train_clean[t,idx_train,:]
 
-                noisy = np_to_variable(noisy, requires_grad=True)
-                clean = np_to_variable(clean, requires_grad=False)
+				noisy = np_to_variable(noisy, requires_grad=True)
+				clean = np_to_variable(clean, requires_grad=False)
 
-                output1 = self.model(noisy)
+				output1 = self.model(noisy)
 
-                # Initialize the network with current network weights
-                self.set_weights(theta)
+				# Initialize the network with current network weights
+				self.set_weights(theta)
 
-                # Train the network with the given K samples
-                self.loss = self.criterion(output1, clean)
-                self.optimizer.zero_grad()
-                self.loss.backward()
-                self.optimizer.step()
+				# Train the network with the given K samples
+				self.loss = self.criterion(output1, clean)
+				self.optimizer.zero_grad()
+				self.loss.backward()
+				self.optimizer.step()
 
-                #Update params theta_i
-                if i == 0:
-                    theta_list.append(self.get_weights())
-                else:
-                    theta_list[t] = self.get_weights()
+				#Update params theta_i
+				if i == 0:
+					theta_list.append(self.get_weights())
+				else:
+					theta_list[t] = self.get_weights()
 
 
-            # Theta parameter update --- Meta-training mode
-            combined_loss = 0   
-            for t in range(num_tasks):
+			# Theta parameter update --- Meta-training mode
+			combined_loss = 0   
+			for t in range(num_tasks):
 
-                #Sample K datapoints from the task t
-                idx_meta = np.random.randint(num_data,size=D)
+				#Sample K datapoints from the task t
+				idx_meta = np.random.randint(num_data,size=D)
 
-                noisy = meta_train_noisy[t,idx_meta,:]
-                clean = meta_train_clean[t,idx_meta,:]
+				noisy = meta_train_noisy[t,idx_meta,:]
+				clean = meta_train_clean[t,idx_meta,:]
 
-                noisy = np_to_variable(noisy, requires_grad=True)
-                clean = np_to_variable(clean, requires_grad=False)
+				noisy = np_to_variable(noisy, requires_grad=True)
+				clean = np_to_variable(clean, requires_grad=False)
 
-                # output2 = self.model(noisy)
+				# output2 = self.model(noisy)
 
-                #Get the loss w.r.t the theta_i network
-                self.set_weights(theta_list[t])
-                approx_clean = self.model(noisy)
-                self.loss_outer = self.criterion(approx_clean, clean)
+				#Get the loss w.r.t the theta_i network
+				self.set_weights(theta_list[t])
+				approx_clean = self.model(noisy)
+				self.loss_outer = self.criterion(approx_clean, clean)
 
-                # Set the model weights to theta before training
-                #Train with this theta on the D samples
-                self.meta_optimizer.zero_grad()
-                grads = torch.autograd.grad(self.loss_outer, self.model.parameters())
-                #Pass the gradients directly to the Custom Adam optimizer
-                self.meta_optimizer.step(grads)
-            
-                
-                # self.set_weights(theta)
-                # self.meta_optimizer.zero_grad()
-                # self.loss.backward()
-                # self.meta_optimizer.step()
+				# Set the model weights to theta before training
+				#Train with this theta on the D samples
+				self.meta_optimizer.zero_grad()
+				grads = torch.autograd.grad(self.loss_outer, self.model.parameters())
+				grads = clip_grad_norm_(grads,0.5)
+				#Pass the gradients directly to the Custom Adam optimizer
+				self.meta_optimizer.step(grads)
+			
+				
+				# self.set_weights(theta)
+				# self.meta_optimizer.zero_grad()
+				# self.loss.backward()
+				# self.meta_optimizer.step()
 
-                # Theta will now have the updated parameters
-                theta = self.get_weights()
+				# Theta will now have the updated parameters
+				theta = self.get_weights()
 
-                #Add up the losses from each of these networks
-                combined_loss += self.loss.data[0]
+				#Add up the losses from each of these networks
+				combined_loss += self.loss.data[0]
 
-            print("Average Loss in iteration %s is %1.2f" %(i,combined_loss/num_tasks))
+			print("Average Loss in iteration %s is %1.2f" %(i,combined_loss/num_tasks))
 
 
 	
@@ -426,30 +449,33 @@ def main(args):
 
 	# Normal training with one SNR
 
-	# num_samples = int(noisy_total.shape[0])
-	# for j in range(num_epochs):
-	# 	total_loss = 0
-	# 	step = 500
-	# 	for i in range(0,num_samples-step,step):
-	# 		clean = clean_total[i:i+step,:]
-	# 		noise = noisy_total[i:i+step,:]
-	# 		# noise = np.log(noise)
-	# 		if(noise.shape[0] is not 0):
-	# 			loss = dae.train_normal(noise,clean,j+1,i,model_path)
-	# 		# print("Batch - %s : %s , Loss - %1.4f" %(i, i+step,loss))
-	# 		total_loss += loss
-	# 	print('epoch [{}/{}], MSE_loss:{:.4f}'.format(j + 1, num_epochs, total_loss))
-	# 	ax1.scatter(j+1, total_loss)
-	# 	if j%100 == 0:
-	# 		ax1.figure.savefig(plot1_name)
+	noisy_total = np.ones([2500,1771])
+	clean_total = np.ones([2500,161])
+
+	num_samples = int(noisy_total.shape[0])
+	for j in range(num_epochs):
+	  total_loss = 0
+	  step = 500
+	  for i in range(0,num_samples-step,step):
+		  clean = clean_total[i:i+step,:]
+		  noise = noisy_total[i:i+step,:]
+		  # noise = np.log(noise)
+		  if(noise.shape[0] is not 0):
+			  loss = dae.train_normal(noise,clean,j+1,i,model_path)
+		  # print("Batch - %s : %s , Loss - %1.4f" %(i, i+step,loss))
+		  total_loss += loss
+	  print('epoch [{}/{}], MSE_loss:{:.4f}'.format(j + 1, num_epochs, total_loss))
+	  ax1.scatter(j+1, total_loss)
+	  if j%100 == 0:
+		  ax1.figure.savefig(plot1_name)
 	
 	meta_train_noisy = np.ones([5,4610,1771])
 	meta_train_clean = np.ones([5,4610,161])
 	train_datapts = 500
 	meta_train_datapts = 500
-	num_iter = 10000		
+	num_iter = 10000        
 	#Meta-training with five SNR
-	dae.train_maml(meta_train_noisy,meta_train_clean,train_datapts,meta_train_datapts,num_iter)
+	# dae.train_maml(meta_train_noisy,meta_train_clean,train_datapts,meta_train_datapts,num_iter)
 
 
 

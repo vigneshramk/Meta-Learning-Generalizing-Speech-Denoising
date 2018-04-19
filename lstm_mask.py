@@ -16,6 +16,8 @@ import matplotlib.pyplot as plt
 
 from adam_new import Adam_Custom
 
+from copy import deepcopy
+
 use_cuda = torch.cuda.is_available()
 
 print('Cuda')
@@ -160,7 +162,8 @@ class Denoise():
 
 
             # Theta parameter update --- Meta-training mode
-            combined_loss = 0   
+            combined_loss = 0
+            theta_copy = deepcopy(theta)   
             for t in range(num_tasks):
 
                 #Sample K datapoints from the task t
@@ -181,12 +184,11 @@ class Denoise():
 
                 # Set the model weights to theta before training
                 #Train with this theta on the D samples
-                self.set_weights(theta)
+                self.set_weights(theta_copy)
                 self.meta_optimizer.zero_grad()
                 grads = torch.autograd.grad(self.loss_outer, self.model.parameters())
                 #Pass the gradients directly to the Custom Adam optimizer
-                self.meta_optimizer.step(grads)
-            
+                self.meta_optimizer.step(grads)            
                 
                 # self.set_weights(theta)
                 # self.meta_optimizer.zero_grad()
