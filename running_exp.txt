@@ -18,7 +18,7 @@ if u did 30 spectograms, your data will be in MetaLearningSpeech/spectograms_tra
 STEP 2. TRAIN YOUR MODELS
 I HARD CODED STUFF CUZ I WAS LAZY
 
-if you want to train a model for just one noise type
+if you want to train a model for just ONE noise type
 python lstm_mask.py --train_lr .005 --num-epochs 51 --train_all 0 --noise_type babble --num_spectograms 30 --exp_name babble
 
 -keep --train_all to be 0. change the noise_type, num-epochs and train_lr
@@ -27,7 +27,7 @@ python lstm_mask.py --train_lr .005 --num-epochs 51 --train_all 0 --noise_type b
 - change exp_name to somoething relevant. it will be the name of the training graph/model path
 - most directories are split up by noise types
 
-if u want to train a model on multiple noise types, u have to do some changing in the code....
+if u want to train a model on MULTIPLE noise types, u have to do some changing in the code....
 
 python lstm_mask.py --train_lr .005 --num-epochs 51 --train_all 1 --num_spectograms 30 --exp_name all_train
 
@@ -63,6 +63,18 @@ ALl TRAINING DATA WILL BE IN SPECTOGRAMS but you shouldnt need to worry about it
 
 Figures are in figures/train_plots/noise_types
 
+results
+- they have log files of your testing experiments as well as some saved audio files for you to listen to. the audio files will be named after exp_name during testing
+
+WHAT WE NEED TO DO
+-Train single noise/multiple noise with different number of spectograms and check testing scores to see if overfitting/underfitting
+    -will tell us if we need more spectograms or less
+
+-Once we know the answer to that, train models on only one noise type/ some of the noise types/ all of the noise types
+    - see performance on noise types that were seen at training and not seen at training
+    - and check this for all SNR levels inside -6 to 6 but also outside of the range
+
+-then MAML
 
 
 

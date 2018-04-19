@@ -88,7 +88,8 @@ output_path = 'results/' + 'logfile_' + noise_type + '_' + noise_snr + '_' + exp
 with open(output_path,'a') as f:
     f.write(model_load_path + '\n' + noise_type +  '\n' + noise_snr + '\n')
 
-
+if not os.path.exists('results/'):
+    os.makedirs('results/')
    
 ###dataloader for test
 
