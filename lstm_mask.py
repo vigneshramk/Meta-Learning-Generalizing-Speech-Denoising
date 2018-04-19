@@ -11,6 +11,7 @@ import torch.optim as optim
 from torch.autograd import Variable
 from LoadNoise import LoadData
 from torch.utils.data import DataLoader
+from TestAddNoiseLoader import TestSpect
 import utils
 import matplotlib.pyplot as plt
 
@@ -25,6 +26,16 @@ FloatTensor = torch.cuda.FloatTensor if use_cuda else torch.FloatTensor
 LongTensor = torch.cuda.LongTensor if use_cuda else torch.LongTensor
 ByteTensor = torch.cuda.ByteTensor if use_cuda else torch.ByteTensor
 Tensor = FloatTensor
+
+def test_mask(model,clean,noise):
+    criterion = nn.MSELoss()
+    noise_batch = np_to_variable(noise)
+    clean_batch = np_to_variable(clean)
+
+    approx_clean = model(noise_batch)
+    loss = criterion(approx_clean, clean_batch)
+    mse = loss.data[0]
+    return approx_clean.data.cpu().numpy().T, mse
 
 def np_to_variable(x, requires_grad=False, dtype=torch.FloatTensor):
     v = Variable(torch.from_numpy(x).type(dtype), requires_grad=requires_grad)
@@ -214,6 +225,7 @@ def main(args):
     reg_train = args.reg_train
     num_spect = args.num_spectograms
     save_name = args.save_file_name
+    test_file = args.test_file
 
     train_datapts = 100
     meta_train_datapts = 100
@@ -237,7 +249,7 @@ def main(args):
         if train_all == 1:
             print('Training All....')
             #all_noise = ['engine','factory1','babble']
-            all_noise =['factory1','babble'] # ONLY CHANGE THIS ONE. change to whatever noise types you want to train with 
+            all_noise =['factory1','babble','engine','ops'] # ONLY CHANGE THIS ONE. change to whatever noise types you want to train with 
             file_name = exp_name  
             print(all_noise)
         else:
@@ -306,9 +318,33 @@ def main(args):
         # Normal training with one SNR
         num_samples = int(noisy_total.shape[0])
         num_batches = num_samples/500
+        loader = TestSpect('dataset/meta_data/test/test.txt',test_file, SNR=-6, noise=noise_type)
+        test_loader = DataLoader(loader,batch_size=1,shuffle=True,num_workers=0)
 
+        test_error_all = []
         print('Training.....')
         for j in range(num_epochs):
+
+            if (j+1) % 5 == 0 and train_all == 0:
+                print('Testing....')
+                test_error = []
+                for i, batch in enumerate(test_loader):
+                    print('Testing File: %d' % i)
+        
+
+                    #get the clean magnitudes and the noise magnitude at the specific SNR
+                    clean_mag = batch['clean_mag'].numpy()
+                    noise_mag = batch['noise_mag'].numpy()
+                    
+
+                    _ , mse = test_mask(dae.model, clean_mag, noise_mag)
+                    test_error.append(mse)
+
+                test_error_all.append(np.mean(test_error))
+                print(test_error_all)
+
+
+
             shuffle_idx = np.random.permutation(noisy_total.shape[0])
 
             noisy_total = noisy_total[shuffle_idx]
@@ -331,6 +367,7 @@ def main(args):
             ax1.scatter(j+1, total_loss)
             if j%100 == 0:
                 ax1.figure.savefig(plot1_name)
+        print(test_error_all)
     else:
         print("meta training.....")
 

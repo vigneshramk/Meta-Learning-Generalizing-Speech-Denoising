@@ -103,6 +103,8 @@ def parse_arguments():
                     help='number of spectograms training')
     parser.add_argument('--save_file_name' ,type=str, default='all_train', metavar='N',
                     help='name to save files')
+    parser.add_argument('--test_file' ,type=str, default='../../Datasets/TIMIT/TEST', metavar='N',
+                    help='name to save files')
 
     # # https://stackoverflow.com/questions/15008758/parsing-boolean-values-with-argparse
     # parser_group = parser.add_mutually_exclusive_group(required=False)

@@ -19,7 +19,7 @@ STEP 2. TRAIN YOUR MODELS
 I HARD CODED STUFF CUZ I WAS LAZY
 
 if you want to train a model for just ONE noise type
-python lstm_mask.py --train_lr .005 --num-epochs 51 --train_all 0 --noise_type babble --num_spectograms 30 --exp_name babble
+python lstm_mask.py --train_lr .005 --num-epochs 51 --train_all 0 --noise_type babble --num_spectograms 30 --exp_name babble  --test_file path/to/TIMIT/TEST
 
 -keep --train_all to be 0. change the noise_type, num-epochs and train_lr
 --num_spectograms 30 - means that u created 30 spectograms for training set from CreateSpectograms.py
