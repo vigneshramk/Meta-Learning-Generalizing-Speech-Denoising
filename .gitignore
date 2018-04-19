@@ -1,2 +1,5 @@
 TIMIT/
 metrics/PESQ/conform
+
+*.tar.gz
+*.pyc
