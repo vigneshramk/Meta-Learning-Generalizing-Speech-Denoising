@@ -91,34 +91,19 @@ def parse_arguments():
                         default=1e-5, help="The training learning rate.")
     parser.add_argument('--meta_lr', dest='meta_lr', type=float,
                         default=1e-4, help="The meta-training learning rate.")
-    parser.add_argument('--batch_size', type=int,
-                        default=400, help="Batch size")
-    parser.add_argument('--hidden_size', type=int,
-                        default=500, help="hidden size")
-    parser.add_argument('--clean_dir', type=str, default='TIMIT/TRAIN/', metavar='N',
-                    help='Clean training files')
-    parser.add_argument('--meta_training_file', type=str, default='dataset/meta_data/train/train.txt', metavar='N',
-                    help='meta training text file')
-    parser.add_argument('--reg_training_file', type=str, default='dataset/reg_data/train/train.txt', metavar='N',
-                    help='training text file')
-    parser.add_argument('--model', type=int, default= 0, metavar = 'N',
-                    help='Which model to use - assuming we are testing different architectures')
     parser.add_argument('--exp_name' ,type=str, default= 'test', metavar = 'N',
                     help='Name of the experiment/weights saved ')                
-    parser.add_argument('--frame_size' ,type=int, default = 11, metavar = 'N',
-                    help='How many slices we want ')
-    parser.add_argument('--SNR', type=int, default=-10, metavar='N',
-                    help='how much SNR to add to test')
     parser.add_argument('--noise_type', type=str, default='babble', metavar='N',
                     help='type of noise to add to test')
-    parser.add_argument('--clean_dir_test', type=str, default='TIMIT/TEST/', metavar='N',
-                    help='Clean testing files')
-    parser.add_argument('--meta_testing_file', type=str, default='dataset/meta_data/test/train.txt', metavar='N',
-                    help='meta testing text file')
     parser.add_argument('--train_all' ,type=int, default=0, metavar='N',
                     help='testing text file')
     parser.add_argument('--reg_train' ,type=int, default=1, metavar='N',
                     help='testing text file')
+    parser.add_argument('--num_spectograms' ,type=int, default=30, metavar='N',
+                    help='number of spectograms training')
+    parser.add_argument('--save_file_name' ,type=str, default='all_train', metavar='N',
+                    help='name to save files')
+
     # # https://stackoverflow.com/questions/15008758/parsing-boolean-values-with-argparse
     # parser_group = parser.add_mutually_exclusive_group(required=False)
     # parser_group.add_argument('--render', dest='render',

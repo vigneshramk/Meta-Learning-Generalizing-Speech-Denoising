@@ -16,8 +16,6 @@ import matplotlib.pyplot as plt
 
 from adam_new import Adam_Custom
 
-from copy import deepcopy
-
 use_cuda = torch.cuda.is_available()
 
 print('Cuda')
@@ -162,8 +160,7 @@ class Denoise():
 
 
             # Theta parameter update --- Meta-training mode
-            combined_loss = 0
-            theta_copy = deepcopy(theta)   
+            combined_loss = 0   
             for t in range(num_tasks):
 
                 #Sample K datapoints from the task t
@@ -184,11 +181,12 @@ class Denoise():
 
                 # Set the model weights to theta before training
                 #Train with this theta on the D samples
-                self.set_weights(theta_copy)
+                self.set_weights(theta)
                 self.meta_optimizer.zero_grad()
                 grads = torch.autograd.grad(self.loss_outer, self.model.parameters())
                 #Pass the gradients directly to the Custom Adam optimizer
-                self.meta_optimizer.step(grads)            
+                self.meta_optimizer.step(grads)
+            
                 
                 # self.set_weights(theta)
                 # self.meta_optimizer.zero_grad()
@@ -214,6 +212,8 @@ def main(args):
     noise_type = args.noise_type
     train_all = args.train_all
     reg_train = args.reg_train
+    num_spect = args.num_spectograms
+    save_name = args.save_file_name
 
     train_datapts = 100
     meta_train_datapts = 100
@@ -237,26 +237,26 @@ def main(args):
         if train_all == 1:
             print('Training All....')
             #all_noise = ['engine','factory1','babble']
-            all_noise =['factory1','babble'] # _1
-            file_name = 'all_train'
+            all_noise =['factory1','babble'] # ONLY CHANGE THIS ONE. change to whatever noise types you want to train with 
+            file_name = exp_name  
             print(all_noise)
         else:
             print('Training ' + noise_type)
             all_noise = [noise_type]
-            file_name = noise_type
+            file_name = exp_name
 
         noisy_total = []
         clean_total =[]
 
         for n in all_noise:
             print(n)
-            noisy_data1 = np.load('spectograms_train30/noise/' + n + '/train/noise_-6.npy')
-            noisy_data2 = np.load('spectograms_train30/noise/'+ n + '/train/noise_-3.npy')
-            noisy_data3 = np.load('spectograms_train30/noise/' + n + '/train/noise_0.npy')
-            noisy_data4 = np.load('spectograms_train30/noise/'+ n + '/train/noise_3.npy')
-            noisy_data5 = np.load('spectograms_train30/noise/' + n + '/train/noise_6.npy')
+            noisy_data1 = np.load('spectograms_train'+str(num_spect)+'/noise/' + n + '/train/noise_-6.npy')
+            noisy_data2 = np.load('spectograms_train'+str(num_spect)+'/noise/'+ n + '/train/noise_-3.npy')
+            noisy_data3 = np.load('spectograms_train'+str(num_spect)+'/noise/' + n + '/train/noise_0.npy')
+            noisy_data4 = np.load('spectograms_train'+str(num_spect)+'/noise/'+ n + '/train/noise_3.npy')
+            noisy_data5 = np.load('spectograms_train'+str(num_spect)+'/noise/' + n + '/train/noise_6.npy')
 
-            clean_data = np.load('spectograms_train30/clean/train/clean_frames_' + n + '.npy')
+            clean_data = np.load('spectograms_train'+str(num_spect)+'/clean/train/clean_frames_' + n + '.npy')
         
             noisy_sq1 = np.reshape(noisy_data1,[noisy_data1.shape[0]*noisy_data1.shape[1],noisy_data1.shape[2],noisy_data1.shape[3]])
             noisy_sq2 = np.reshape(noisy_data2,[noisy_data2.shape[0]*noisy_data2.shape[1],noisy_data2.shape[2],noisy_data2.shape[3]])
@@ -294,7 +294,7 @@ def main(args):
         str_path1 = 'training_loss_normal_mask_lstm_total_' + exp_name + '.png'
         plot1_name = os.path.join(path_name,str_path1)
 
-        model_path = 'models/lstm_mask_normal_train/' + file_name + '_1'
+        model_path = 'models/lstm_mask_normal_train/' + file_name 
 
         print(model_path)
         
@@ -345,13 +345,13 @@ def main(args):
             noisy_total = []
             clean_total = []
 
-            noisy_data1 = np.load('spectograms_train30/noise/' + n + '/train/noise_-6.npy')
-            noisy_data2 = np.load('spectograms_train30/noise/'+ n + '/train/noise_-3.npy')
-            noisy_data3 = np.load('spectograms_train30/noise/' + n + '/train/noise_0.npy')
-            noisy_data4 = np.load('spectograms_train30/noise/'+ n + '/train/noise_3.npy')
-            noisy_data5 = np.load('spectograms_train30/noise/' + n + '/train/noise_6.npy')
+            noisy_data1 = np.load('spectograms_train'+str(num_spect)+'/noise/' + n + '/train/noise_-6.npy')
+            noisy_data2 = np.load('spectograms_train'+str(num_spect)+'/noise/'+ n + '/train/noise_-3.npy')
+            noisy_data3 = np.load('spectograms_train'+str(num_spect)+'/noise/' + n + '/train/noise_0.npy')
+            noisy_data4 = np.load('spectograms_train'+str(num_spect)+'/noise/'+ n + '/train/noise_3.npy')
+            noisy_data5 = np.load('spectograms_train'+str(num_spect)+'/noise/' + n + '/train/noise_6.npy')
 
-            clean_data = np.load('spectograms_train30/clean/train/clean_frames_' + n + '.npy')
+            clean_data = np.load('spectograms_train'+str(num_spect)+'/clean/train/clean_frames_' + n + '.npy')
         
             noisy_sq1 = np.reshape(noisy_data1,[noisy_data1.shape[0]*noisy_data1.shape[1],noisy_data1.shape[2],noisy_data1.shape[3]])
             noisy_sq2 = np.reshape(noisy_data2,[noisy_data2.shape[0]*noisy_data2.shape[1],noisy_data2.shape[2],noisy_data2.shape[3]])

@@ -1,0 +1,68 @@
+ALL REGULAR TESTING FOR NOW
+
+
+STEP 1. CREATE YOUR SPECTOGRAMS 
+python CreateSpectograms.py --data_path ../path/to/timit/train --noise_type noisegoeshere --num_spect numberofspects
+
+-noise types are
+    babble
+    engine
+    factory1
+    ops
+    bucc
+
+default specotgrams is 30 
+if u did 30 spectograms, your data will be in MetaLearningSpeech/spectograms_train30/noise/NOISETYPEYOUCHOSE
+
+
+STEP 2. TRAIN YOUR MODELS
+I HARD CODED STUFF CUZ I WAS LAZY
+
+if you want to train a model for just one noise type
+python lstm_mask.py --train_lr .005 --num-epochs 51 --train_all 0 --noise_type babble --num_spectograms 30 --exp_name babble
+
+-keep --train_all to be 0. change the noise_type, num-epochs and train_lr
+--num_spectograms 30 - means that u created 30 spectograms for training set from CreateSpectograms.py
+- the rest of the loading data will be found.
+- change exp_name to somoething relevant. it will be the name of the training graph/model path
+- most directories are split up by noise types
+
+if u want to train a model on multiple noise types, u have to do some changing in the code....
+
+python lstm_mask.py --train_lr .005 --num-epochs 51 --train_all 1 --num_spectograms 30 --exp_name all_train
+
+- you change train_all 1
+- you dont need to specify noise type since it will do all noise types now
+- the rest is the same as before
+- BUT U HAVE TO CHANGE WHICH NOISE TYPES TO TRAIN ON IN THE CODE
+- LOOK UNDER MAIN
+    if reg_train == 1: 
+    ...
+    ...
+    all_noise=['factory1','babble' ....]
+
+    THAT IS WHERE U ADD MORE NOISE TYPES. ADD WHATEVER NOISE TYPES U WANT TO TRAIN UR MODEL WITH BUT MAKE SURE THE SPECTOGRAM FILES EXIST
+    It will save the model in a folder exp_name
+    Make the exp_name give u a hint to what noise type you trained with 
+
+
+STEP 3. TEST YOUR MODEL
+
+python RegLSTMTest.py --noise_type babble --noise_snr -3 --model_directory models/lstm_mask_normal_train/babble/model_lstm.h5 --exp_name allbab0 --save_audio 0
+
+you choose what noise type to test at
+what snr to test at
+directory that leads directly to your model 
+exp_name is an attachment to the saved audio file. make it helpful
+
+
+ALL TRAIN MODELS WILL BE IN 
+models/lstm_mask_normal_train/exp_name_when_training
+
+ALl TRAINING DATA WILL BE IN SPECTOGRAMS but you shouldnt need to worry about it
+
+Figures are in figures/train_plots/noise_types
+
+
+
+
