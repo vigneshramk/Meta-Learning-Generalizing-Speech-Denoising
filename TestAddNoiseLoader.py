@@ -48,6 +48,14 @@ class TestSpect(Dataset):
             [sub_noise, sub_fs] = librosa.load('noise/babble_test.wav',self.fs) 
         elif self.noise == 'factory1':
             [sub_noise, sub_fs] = librosa.load('noise/factory1_test.wav',self.fs) 
+        elif self.noise == 'engine':
+            [sub_noise, sub_fs] = librosa.load('noise/engine_test.wav',self.fs)
+        elif self.noise =='ops':
+            [sub_noise, sub_fs] = librosa.load('noise/ops.wav',self.fs)
+        elif self.noise == 'bucc':
+            [sub_noise, sub_fs] = librosa.load('noise/bucc.wav',self.fs)
+
+
         elif self.noise =='white':
             sub_noise = np.random.normal(0,1,audio.shape)
         
@@ -63,5 +71,5 @@ class TestSpect(Dataset):
 
         #make this a function later on
 
-        sample = {'clean_mag': magClean, 'noise_mag': magNoise, 'noise_audio' :noise_audio }
+        sample = {'clean_mag': magClean, 'noise_mag': magNoise, 'noise_audio' :noise_audio,'clean_audio': audio }
         return sample 

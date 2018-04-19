@@ -56,50 +56,77 @@ def reconstruct_clean(noise_audio, approx_clean_mag,frame_window=5):
         
     approx_clean_audio = librosa.istft(approx_clean_mag*phaseN,hop_length=160)
     return approx_clean_audio
+
+def calcluate_sdr(clean,approx_clean,noise):
+    len_clean = clean.shape[0]
+    len_approx_clean = approx_clean.shape[0]
+
+    if len_clean > len_approx_clean:
+        clean = clean[0:len_approx_clean]
+        noise = noise[0:len_approx_clean]
+    else:
+        approx_clean = approx_clean[0:len_clean]
+
+    projection_approx = np.dot(clean,approx_clean) * clean / np.dot(clean,clean)
+    projection_noise = np.dot(clean,noise) * clean / np.dot(clean,clean)
+
+    e_approx = approx_clean - projection_approx
+    e_noise = noise - projection_noise
+
+    SDR_approx = 10.0 * np.log10(np.dot(projection_approx,projection_approx)/np.dot(e_approx,e_approx))
+    SDR_noise = 10.0 * np.log10(np.dot(projection_noise,projection_noise)/np.dot(e_noise,e_noise))
+
+    return SDR_approx,SDR_noise
+
+    
+        
+
+
 def parse_arguments():
-	# Command-line flags are defined here.
-	parser = argparse.ArgumentParser()
-	parser.add_argument('--num-epochs', dest='num_epochs', type=int,
-						default=1000, help="Number of epochs to train on.")
-	parser.add_argument('--train_lr', dest='train_lr', type=float,
-						default=1e-5, help="The training learning rate.")
-	parser.add_argument('--meta_lr', dest='meta_lr', type=float,
-						default=1e-4, help="The meta-training learning rate.")
-	parser.add_argument('--batch_size', type=int,
-						default=400, help="Batch size")
-	parser.add_argument('--hidden_size', type=int,
-						default=500, help="hidden size")
-	parser.add_argument('--clean_dir', type=str, default='TIMIT/TRAIN/', metavar='N',
-					help='Clean training files')
-	parser.add_argument('--meta_training_file', type=str, default='dataset/meta_data/train/train.txt', metavar='N',
-					help='meta training text file')
-	parser.add_argument('--reg_training_file', type=str, default='dataset/reg_data/train/train.txt', metavar='N',
-					help='training text file')
-	parser.add_argument('--model', type=int, default= 0, metavar = 'N',
-					help='Which model to use - assuming we are testing different architectures')
-	parser.add_argument('--exp_name' ,type=str, default= 'test', metavar = 'N',
-					help='Name of the experiment/weights saved ')                
-	parser.add_argument('--frame_size' ,type=int, default = 11, metavar = 'N',
-					help='How many slices we want ')
-	parser.add_argument('--SNR', type=int, default=-10, metavar='N',
-					help='how much SNR to add to test')
-	parser.add_argument('--noise_type', type=str, default='babble', metavar='N',
-					help='type of noise to add to test')
-	parser.add_argument('--clean_dir_test', type=str, default='TIMIT/TEST/', metavar='N',
-					help='Clean testing files')
-	parser.add_argument('--meta_testing_file', type=str, default='dataset/meta_data/test/train.txt', metavar='N',
-					help='meta testing text file')
-	parser.add_argument('--train_all' ,type=int, default=0, metavar='N',
-					help='testing text file')
+    # Command-line flags are defined here.
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--num-epochs', dest='num_epochs', type=int,
+                        default=51, help="Number of epochs to train on.")
+    parser.add_argument('--train_lr', dest='train_lr', type=float,
+                        default=1e-5, help="The training learning rate.")
+    parser.add_argument('--meta_lr', dest='meta_lr', type=float,
+                        default=1e-4, help="The meta-training learning rate.")
+    parser.add_argument('--batch_size', type=int,
+                        default=400, help="Batch size")
+    parser.add_argument('--hidden_size', type=int,
+                        default=500, help="hidden size")
+    parser.add_argument('--clean_dir', type=str, default='TIMIT/TRAIN/', metavar='N',
+                    help='Clean training files')
+    parser.add_argument('--meta_training_file', type=str, default='dataset/meta_data/train/train.txt', metavar='N',
+                    help='meta training text file')
+    parser.add_argument('--reg_training_file', type=str, default='dataset/reg_data/train/train.txt', metavar='N',
+                    help='training text file')
+    parser.add_argument('--model', type=int, default= 0, metavar = 'N',
+                    help='Which model to use - assuming we are testing different architectures')
+    parser.add_argument('--exp_name' ,type=str, default= 'test', metavar = 'N',
+                    help='Name of the experiment/weights saved ')                
+    parser.add_argument('--frame_size' ,type=int, default = 11, metavar = 'N',
+                    help='How many slices we want ')
+    parser.add_argument('--SNR', type=int, default=-10, metavar='N',
+                    help='how much SNR to add to test')
+    parser.add_argument('--noise_type', type=str, default='babble', metavar='N',
+                    help='type of noise to add to test')
+    parser.add_argument('--clean_dir_test', type=str, default='TIMIT/TEST/', metavar='N',
+                    help='Clean testing files')
+    parser.add_argument('--meta_testing_file', type=str, default='dataset/meta_data/test/train.txt', metavar='N',
+                    help='meta testing text file')
+    parser.add_argument('--train_all' ,type=int, default=0, metavar='N',
+                    help='testing text file')
+    parser.add_argument('--reg_train' ,type=int, default=1, metavar='N',
+                    help='testing text file')
+    # # https://stackoverflow.com/questions/15008758/parsing-boolean-values-with-argparse
+    # parser_group = parser.add_mutually_exclusive_group(required=False)
+    # parser_group.add_argument('--render', dest='render',
+    #                         action='store_true',
+    #                         help="Whether to render the environment.")
+    # parser_group.add_argument('--no-render', dest='render',
+    #                         action='store_false',
+    #                         help="Whether to render the environment.")
+    # parser.set_defaults(render=False)
 
-	# # https://stackoverflow.com/questions/15008758/parsing-boolean-values-with-argparse
-	# parser_group = parser.add_mutually_exclusive_group(required=False)
-	# parser_group.add_argument('--render', dest='render',
-	#                         action='store_true',
-	#                         help="Whether to render the environment.")
-	# parser_group.add_argument('--no-render', dest='render',
-	#                         action='store_false',
-	#                         help="Whether to render the environment.")
-	# parser.set_defaults(render=False)
-
-	return parser.parse_args()
+    return parser.parse_args()

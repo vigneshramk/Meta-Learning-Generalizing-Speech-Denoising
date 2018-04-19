@@ -1,0 +1,3 @@
+models/lstm_mask_normal_train/all_train/model_lstm.h5
+bacc
+0

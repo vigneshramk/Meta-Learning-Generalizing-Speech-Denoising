@@ -16,7 +16,7 @@ from TestAddNoiseLoader import TestSpect
 from torch.utils.data import DataLoader
 
 
-
+#CUDA_VISIBLE_DEVICES=2,3 python RegLSTMTest.py --noise_type bucc --noise_snr 0 --model_directory models/lstm_mask_normal_train/all_train/model_lstm.h5 --exp_name allbab0 --save_audio 0
 parser = argparse.ArgumentParser()
 parser.add_argument('--test_directory', type=str,
 						default='../../Datasets/TIMIT/TEST', help="path for the data")
@@ -25,9 +25,9 @@ parser.add_argument('--noise_type', type=str,
 parser.add_argument('--noise_snr', type=str,
 						default='-6', help="noise snr to test at") 
 parser.add_argument('--model_directory', type=str,
-						default='models/normal_train/', help="path where model weight lies")
-parser.add_argument('--save_audio', type=bool,
-						default=False, help="if u want to save the audio files")
+						default='models/lstm_mask_normal_train/', help="path where model weight lies")
+parser.add_argument('--save_audio', type=int,
+						default=0, help="if u want to save the audio files")
 parser.add_argument('--exp_name', type=str,
 						default='test', help="name of your experiment")
 
@@ -78,6 +78,8 @@ MSE = []
 PESQ_Noise = []
 PESQ_Approx = []
 STOI = []
+SDR_Approx = []
+#SDR_Noise = []
 
 if not os.path.exists('results/'):
     os.makedirs('results/')
@@ -100,17 +102,32 @@ for i, batch in enumerate(test_loader):
     #get the clean magnitudes and the noise magnitude at the specific SNR
     clean_mag = batch['clean_mag'].numpy()
     noise_mag = batch['noise_mag'].numpy()
-    noise_audio = batch['noise_audio'].numpy()
+    
 
     approx_clean_mag, mse = test_mask(model, clean_mag, noise_mag)
+
+
+    noise_audio = batch['noise_audio'].numpy()
+    clean_audio = batch['clean_audio'].numpy()
+
+    reshaped = np.reshape(approx_clean_mag,(approx_clean_mag.shape[0],approx_clean_mag.shape[1]))
+    noise_audio = np.reshape(noise_audio,(noise_audio.shape[1]))
+    clean_audio = np.reshape(clean_audio,(clean_audio.shape[1]))
     
-    if save_audio or i == 5:
-        print('saving audio...')
-        reshaped = np.reshape(approx_clean_mag,(approx_clean_mag.shape[0],approx_clean_mag.shape[1]))
-        noise_audio = np.reshape(noise_audio,(noise_audio.shape[1]))
-        reconstruct_approx = utils.reconstruct_clean(noise_audio, reshaped)
+    reconstruct_approx = utils.reconstruct_clean(noise_audio, reshaped)
+    sdr_approx,sdr_noise = utils.calcluate_sdr(clean_audio, reconstruct_approx, noise_audio)
+    print(sdr_approx)
+    SDR_Approx.append(sdr_approx)
+    print(sdr_noise)
+
+    if save_audio==1 or i == 5:
+        print('saving audio.....')
+        
         wavfile.write('results/approx_' + noise_type + '_' + noise_snr + '_' + exp_name + '.WAV', 16000, reconstruct_approx)
-        wavfile.write('results/actual_' + noise_type + '_' + noise_snr + '.WAV', 16000, noise_audio)
+        wavfile.write('results/actual_' + noise_type + '_' + noise_snr +  '_' + exp_name + '.WAV', 16000, noise_audio)
+        wavfile.write('results/clean_' + exp_name + '.WAV', 16000, clean_audio) 
+        
+
 
     """
     time.sleep(5)
@@ -135,13 +152,14 @@ for i, batch in enumerate(test_loader):
     print('MSE %f' % mse) 
     
 print(model_directory)
+print(noise_type)
 print(noise_snr)
 #print('Mean Noise PESQ Score %f' % np.mean(PESQ_Noise))
 #print('Mean Approx PESQ Score %f' % np.mean(PESQ_Approx))
 print('Mean MSE Score %f' % np.mean(MSE))
-print('Minimum mse %d' %np.min(MSE))        
-print('Max mse %d' % np.max(MSE))
 print('Variance mse %f' % np.var(MSE))
+print('SDR Approx %f' % np.mean(SDR_Approx))
+print('SDR var %f'% np.var(SDR_Approx))
 
 with open(output_path,'a') as f:
     f.write(str(np.mean(MSE))+ '\n' + str(np.min(MSE)) + '\n' + str(np.max(MSE)) + '\n' + str(np.var(MSE)))
@@ -149,11 +167,3 @@ with open(output_path,'a') as f:
     ###pass approx_clean_audio,clean_audio,noise_audio,clean_mag,noise_mag,approx_clean_mag into function
     ### returns all the scores: PESQ,STOI,SDR anythiniiiiig
     
-
-  
-
-
-
-
-
-

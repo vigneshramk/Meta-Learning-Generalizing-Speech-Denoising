@@ -1,0 +1,6 @@
+models/lstm_mask_normal_train/all_train/model_lstm.h5
+bucc
+-6
+models/lstm_mask_normal_train/all_train_1/model_lstm.h5
+bucc
+-6

@@ -1,0 +1,10 @@
+models/lstm_mask_normal_train/all_train/model_lstm.h5
+factory1
+0
+models/lstm_mask_normal_train/all_train/model_lstm.h5
+factory1
+0
+0.002524698806666406
+0.0001342895266134292
+0.022844433784484863
+5.149044107049826e-06

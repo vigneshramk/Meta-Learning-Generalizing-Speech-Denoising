@@ -20,7 +20,7 @@ use_cuda = torch.cuda.is_available()
 
 print('Cuda')
 print(use_cuda)
-
+#CUDA_VISIBLE_DEVICES=2,3
 FloatTensor = torch.cuda.FloatTensor if use_cuda else torch.FloatTensor
 LongTensor = torch.cuda.LongTensor if use_cuda else torch.LongTensor
 ByteTensor = torch.cuda.ByteTensor if use_cuda else torch.ByteTensor
@@ -99,7 +99,7 @@ class Denoise():
         self.loss.backward()
         self.optimizer.step()
 
-        if j%50==0 and i==0:
+        if j%10==0 and i==0:
 
             state = {
                 'epoch': j,
@@ -116,7 +116,7 @@ class Denoise():
 
     def train_maml(self,meta_train_noisy,meta_train_clean,train_datapts,meta_train_datapts,num_iter):
 
-        num_tasks,num_data,num_features = meta_train_noisy.shape
+        num_tasks,num_data,window_size,feature_size = meta_train_noisy.shape
 
         K = train_datapts
         D = meta_train_datapts
@@ -135,8 +135,8 @@ class Denoise():
                 #Sample K datapoints from the task t
                 idx_train = np.random.randint(num_data,size=K)
 
-                noisy = meta_train_noisy[t,idx_train,:]
-                clean = meta_train_clean[t,idx_train,:]
+                noisy = meta_train_noisy[t,idx_train,:,:]
+                clean = meta_train_clean[t,idx_train,:,:]
 
                 noisy = np_to_variable(noisy, requires_grad=True)
                 clean = np_to_variable(clean, requires_grad=False)
@@ -166,8 +166,8 @@ class Denoise():
                 #Sample K datapoints from the task t
                 idx_meta = np.random.randint(num_data,size=D)
 
-                noisy = meta_train_noisy[t,idx_meta,:]
-                clean = meta_train_clean[t,idx_meta,:]
+                noisy = meta_train_noisy[t,idx_meta,:,:]
+                clean = meta_train_clean[t,idx_meta,:,:]
 
                 noisy = np_to_variable(noisy, requires_grad=True)
                 clean = np_to_variable(clean, requires_grad=False)
@@ -181,6 +181,7 @@ class Denoise():
 
                 # Set the model weights to theta before training
                 #Train with this theta on the D samples
+                self.set_weights(theta)
                 self.meta_optimizer.zero_grad()
                 grads = torch.autograd.grad(self.loss_outer, self.model.parameters())
                 #Pass the gradients directly to the Custom Adam optimizer
@@ -198,7 +199,7 @@ class Denoise():
                 #Add up the losses from each of these networks
                 combined_loss += self.loss.data[0]
 
-            print("Average Loss in iteration %s is %1.2f" %(i,combined_loss/num_tasks))
+            print("Average Loss in iteration %s is %.4f" %(i,combined_loss/num_tasks))
 
 
 def main(args):
@@ -207,23 +208,11 @@ def main(args):
     num_epochs = args.num_epochs
     train_lr = args.train_lr
     meta_lr = args.meta_lr
-    batch_size = args.batch_size
-    hidden_size = args.hidden_size
-    clean_dir = args.clean_dir
-    meta_training_file = args.meta_training_file
-    reg_training_file = args.reg_training_file
     exp_name = args.exp_name
-    frame_size = args.frame_size
     noise_type = args.noise_type
-    SNR = args.SNR
-    reg_clean_test = args.clean_dir_test
-    meta_test_file = args.meta_testing_file
-    reg_test_file = args.reg_testing_file
     train_all = args.train_all
+    reg_train = args.reg_train
 
-    num_samples = 1000
-    num_features = 200
-    num_tasks = 5
     train_datapts = 100
     meta_train_datapts = 100
 
@@ -234,109 +223,185 @@ def main(args):
         model.cuda()
 
     model.train()
+    dae = Denoise(model,train_lr,meta_lr)
 
-    # Create plot
-    fig1 = plt.figure()
-    ax1 = fig1.gca()
-    ax1.set_title('Loss vs Epochs')
+    if reg_train == 1:
+        print('Regular Training.....')
+        # Create plot
+        fig1 = plt.figure()
+        ax1 = fig1.gca()
+        ax1.set_title('Loss vs Epochs')
 
-    if train_all == 1:
-        print('Training All....')
-        all_noise = ['babble','factory1','engine']
-        file_name = 'all_train'
-        print(all_noise)
-    else:
-        print('Training ' + noise_type)
-        all_noise = [noise_type]
-        file_name = noise_type
+        if train_all == 1:
+            print('Training All....')
+            #all_noise = ['engine','factory1','babble']
+            all_noise =['factory1','babble'] # _1
+            file_name = 'all_train'
+            print(all_noise)
+        else:
+            print('Training ' + noise_type)
+            all_noise = [noise_type]
+            file_name = noise_type
 
-    noisy_total = []
-    clean_total =[]
+        noisy_total = []
+        clean_total =[]
 
-    for n in all_noise:
-        print(n)
-        noisy_data1 = np.load('spectograms_train30/noise/' + n + '/train/noise_-6.npy')
-        noisy_data2 = np.load('spectograms_train30/noise/'+ n + '/train/noise_-3.npy')
-        noisy_data3 = np.load('spectograms_train30/noise/' + n + '/train/noise_0.npy')
-        noisy_data4 = np.load('spectograms_train30/noise/'+ n + '/train/noise_3.npy')
-        noisy_data5 = np.load('spectograms_train30/noise/' + n + '/train/noise_6.npy')
+        for n in all_noise:
+            print(n)
+            noisy_data1 = np.load('spectograms_train30/noise/' + n + '/train/noise_-6.npy')
+            noisy_data2 = np.load('spectograms_train30/noise/'+ n + '/train/noise_-3.npy')
+            noisy_data3 = np.load('spectograms_train30/noise/' + n + '/train/noise_0.npy')
+            noisy_data4 = np.load('spectograms_train30/noise/'+ n + '/train/noise_3.npy')
+            noisy_data5 = np.load('spectograms_train30/noise/' + n + '/train/noise_6.npy')
 
-        clean_data = np.load('spectograms_train30/clean/train/clean_frames_' + n + '.npy')
+            clean_data = np.load('spectograms_train30/clean/train/clean_frames_' + n + '.npy')
+        
+            noisy_sq1 = np.reshape(noisy_data1,[noisy_data1.shape[0]*noisy_data1.shape[1],noisy_data1.shape[2],noisy_data1.shape[3]])
+            noisy_sq2 = np.reshape(noisy_data2,[noisy_data2.shape[0]*noisy_data2.shape[1],noisy_data2.shape[2],noisy_data2.shape[3]])
+            noisy_sq3 = np.reshape(noisy_data3,[noisy_data3.shape[0]*noisy_data3.shape[1],noisy_data3.shape[2],noisy_data3.shape[3]])
+            noisy_sq4 = np.reshape(noisy_data4,[noisy_data4.shape[0]*noisy_data4.shape[1],noisy_data4.shape[2],noisy_data4.shape[3]])
+            noisy_sq5 = np.reshape(noisy_data5,[noisy_data5.shape[0]*noisy_data5.shape[1],noisy_data5.shape[2],noisy_data5.shape[3]])
+        
+            noisy_total.extend(noisy_sq1)
+            noisy_total.extend(noisy_sq2)
+            noisy_total.extend(noisy_sq3)
+            noisy_total.extend(noisy_sq4)
+            noisy_total.extend(noisy_sq5)
+        
+            
+
+            clean_sq1 = np.reshape(clean_data,[clean_data.shape[0]*clean_data.shape[1],clean_data.shape[2],clean_data.shape[3]])
+
+        
+
+            clean_total.extend(clean_sq1)
+            clean_total.extend(clean_sq1)
+            clean_total.extend(clean_sq1)
+            clean_total.extend(clean_sq1)
+            clean_total.extend(clean_sq1)
+
+            
     
-        noisy_sq1 = np.reshape(noisy_data1,[noisy_data1.shape[0]*noisy_data1.shape[1],noisy_data1.shape[2],noisy_data1.shape[3]])
-        noisy_sq2 = np.reshape(noisy_data2,[noisy_data2.shape[0]*noisy_data2.shape[1],noisy_data2.shape[2],noisy_data2.shape[3]])
-        noisy_sq3 = np.reshape(noisy_data3,[noisy_data3.shape[0]*noisy_data3.shape[1],noisy_data3.shape[2],noisy_data3.shape[3]])
-        noisy_sq4 = np.reshape(noisy_data4,[noisy_data4.shape[0]*noisy_data4.shape[1],noisy_data4.shape[2],noisy_data4.shape[3]])
-        noisy_sq5 = np.reshape(noisy_data5,[noisy_data5.shape[0]*noisy_data5.shape[1],noisy_data5.shape[2],noisy_data5.shape[3]])
-    
-        noisy_total.extend(noisy_sq1)
-        noisy_total.extend(noisy_sq2)
-        noisy_total.extend(noisy_sq3)
-        noisy_total.extend(noisy_sq4)
-        noisy_total.extend(noisy_sq5)
-    
+
         noisy_total = np.array(noisy_total)
         print(noisy_total.shape)
 
-        clean_sq1 = np.reshape(clean_data,[clean_data.shape[0]*clean_data.shape[1],clean_data.shape[2],clean_data.shape[3]])
-
-    
-
-        clean_total.extend(clean_sq1)
-        clean_total.extend(clean_sq1)
-        clean_total.extend(clean_sq1)
-        clean_total.extend(clean_sq1)
-        clean_total.extend(clean_sq1)
-
         clean_total = np.array(clean_total)
         print(clean_total.shape)
-   
-    dae = Denoise(model,train_lr,meta_lr)
+        path_name = './figures/train_plots/' + file_name + '/'
+        str_path1 = 'training_loss_normal_mask_lstm_total_' + exp_name + '.png'
+        plot1_name = os.path.join(path_name,str_path1)
 
-    path_name = './figures/train_plots/' + file_name + '/'
-    str_path1 = 'training_loss_normal_mask_lstm_total_' + exp_name + '.png'
-    plot1_name = os.path.join(path_name,str_path1)
+        model_path = 'models/lstm_mask_normal_train/' + file_name + '_1'
 
-    model_path = 'models/lstm_mask_normal_train/' + file_name
+        print(model_path)
+        
+        if not os.path.exists(path_name):
+            os.makedirs(path_name)
+        if not os.path.exists(model_path):
+            os.makedirs(model_path)
 
-    print(model_path)
-    
-    if not os.path.exists(path_name):
-        os.makedirs(path_name)
-    if not os.path.exists(model_path):
-        os.makedirs(model_path)
+        # Normal training with one SNR
+        num_samples = int(noisy_total.shape[0])
+        num_batches = num_samples/500
 
-    # Normal training with one SNR
-    num_samples = int(noisy_total.shape[0])
-    num_batches = num_samples/500
+        print('Training.....')
+        for j in range(num_epochs):
+            shuffle_idx = np.random.permutation(noisy_total.shape[0])
 
-    print('Training.....')
-    for j in range(num_epochs):
-        shuffle_idx = np.random.permutation(noisy_total.shape[0])
+            noisy_total = noisy_total[shuffle_idx]
+            clean_total = clean_total[shuffle_idx]
 
-        noisy_total = noisy_total[shuffle_idx]
-        clean_total = clean_total[shuffle_idx]
+            total_loss = 0
+            step = 512
+            for i in range(0,num_samples-step,step):
+                clean = clean_total[i:i+step,:]
+                noise = noisy_total[i:i+step,:]
+                # noise = np.log(noise)
+                if(noise.shape[0] is not 0):
+                    loss = dae.train_normal(noise,clean,j+1,i,model_path)
 
-        total_loss = 0
-        step = 500
-        for i in range(0,num_samples-step,step):
-            clean = clean_total[i:i+step,:]
-            noise = noisy_total[i:i+step,:]
-            # noise = np.log(noise)
-            if(noise.shape[0] is not 0):
-                loss = dae.train_normal(noise,clean,j+1,i,model_path)
+                # print("Batch - %s : %s , Loss - %1.4f" %(i, i+step,loss))
 
-            # print("Batch - %s : %s , Loss - %1.4f" %(i, i+step,loss))
+                total_loss += loss
+                
+            print('epoch [{}/{}], MSE_loss:{:.4f}'.format(j + 1, num_epochs, total_loss/num_batches))
+            ax1.scatter(j+1, total_loss)
+            if j%100 == 0:
+                ax1.figure.savefig(plot1_name)
+    else:
+        print("meta training.....")
 
-            total_loss += loss
-            
-        print('epoch [{}/{}], MSE_loss:{:.4f}'.format(j + 1, num_epochs, total_loss/num_batches))
-        ax1.scatter(j+1, total_loss)
-        if j%100 == 0:
-            ax1.figure.savefig(plot1_name)
-            
-    #Meta-training with five SNR
-    # dae.train_maml(meta_train_noisy,meta_train_clean,train_datapts,meta_train_datapts,num_iter)
+        all_noise = ['factory1' , 'babble']
+        all_babble_noise = []
+        all_babble_clean = []
+        all_factory1_noise = []
+        all_factory1_clean = []
+        
+        for n in all_noise:
+            print(n)
+            noisy_total = []
+            clean_total = []
+
+            noisy_data1 = np.load('spectograms_train30/noise/' + n + '/train/noise_-6.npy')
+            noisy_data2 = np.load('spectograms_train30/noise/'+ n + '/train/noise_-3.npy')
+            noisy_data3 = np.load('spectograms_train30/noise/' + n + '/train/noise_0.npy')
+            noisy_data4 = np.load('spectograms_train30/noise/'+ n + '/train/noise_3.npy')
+            noisy_data5 = np.load('spectograms_train30/noise/' + n + '/train/noise_6.npy')
+
+            clean_data = np.load('spectograms_train30/clean/train/clean_frames_' + n + '.npy')
+        
+            noisy_sq1 = np.reshape(noisy_data1,[noisy_data1.shape[0]*noisy_data1.shape[1],noisy_data1.shape[2],noisy_data1.shape[3]])
+            noisy_sq2 = np.reshape(noisy_data2,[noisy_data2.shape[0]*noisy_data2.shape[1],noisy_data2.shape[2],noisy_data2.shape[3]])
+            noisy_sq3 = np.reshape(noisy_data3,[noisy_data3.shape[0]*noisy_data3.shape[1],noisy_data3.shape[2],noisy_data3.shape[3]])
+            noisy_sq4 = np.reshape(noisy_data4,[noisy_data4.shape[0]*noisy_data4.shape[1],noisy_data4.shape[2],noisy_data4.shape[3]])
+            noisy_sq5 = np.reshape(noisy_data5,[noisy_data5.shape[0]*noisy_data5.shape[1],noisy_data5.shape[2],noisy_data5.shape[3]])
+        
+            noisy_total.extend(noisy_sq1)
+            noisy_total.extend(noisy_sq2)
+            noisy_total.extend(noisy_sq3)
+            noisy_total.extend(noisy_sq4)
+            noisy_total.extend(noisy_sq5)
+        
+            clean_sq1 = np.reshape(clean_data,[clean_data.shape[0]*clean_data.shape[1],clean_data.shape[2],clean_data.shape[3]])
+
+            clean_total.extend(clean_sq1)
+            clean_total.extend(clean_sq1)
+            clean_total.extend(clean_sq1)
+            clean_total.extend(clean_sq1)
+            clean_total.extend(clean_sq1)
+
+            if n == 'factory1':
+                print('factory1 copy')
+                all_factory1_noise = np.copy(noisy_total)
+                all_factory1_clean = np.copy(clean_total)
+
+            elif n == 'babble':
+                print('babble copy ')
+                all_babble_noise = np.copy(noisy_total)
+                all_babble_clean = np.copy(clean_total)
+
+        noisy_total = []
+        clean_total = []
+        print('Creating Meta Data')
+
+        print(all_babble_noise.shape)
+        print(all_factory1_noise.shape)
+
+        maml_data_noise = np.zeros((len(all_noise),all_babble_noise.shape[0],all_babble_noise.shape[1],all_babble_noise.shape[2]))
+        maml_data_clean = np.zeros((len(all_noise),all_babble_noise.shape[0],all_babble_noise.shape[1],all_babble_noise.shape[2]))
+
+        maml_data_noise[0] = all_babble_noise
+        maml_data_noise[1] = all_factory1_noise
+
+        maml_data_clean[0] = all_babble_clean
+        maml_data_clean[1] = all_factory1_clean 
+
+        print(maml_data_noise.shape)
+        print(maml_data_clean.shape)
+
+        #Meta-training with five SNR
+        dae.train_maml(maml_data_noise,maml_data_clean,train_datapts,meta_train_datapts,num_iter)
 
 
 
