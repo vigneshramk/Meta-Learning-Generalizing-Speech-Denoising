@@ -7,3 +7,4 @@ TIMIT/
 
 *.tar.gz
 *.pyc
+.python-version
