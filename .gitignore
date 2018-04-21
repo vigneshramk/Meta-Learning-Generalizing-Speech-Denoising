@@ -1,8 +1,9 @@
-TIMIT/
+.vscode/
 metrics/PESQ/conform
 results/
 __pycache__/
 spectograms/
+TIMIT/
 
 *.tar.gz
 *.pyc

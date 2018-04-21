@@ -4,6 +4,8 @@ import numpy as np
 from torch.utils.data import DataLoader
 import argparse
 import os
+from tqdm import tqdm
+
 parser = argparse.ArgumentParser()
 parser.add_argument('--data_path', type=str,
 						default='TIMIT/TRAIN', help="path for the data")
@@ -40,7 +42,7 @@ print('Spectogram number: %d' % num_spectograms)
 print('Noise type: ' + noise_type)
 
 noise_snr =[-6,-3,0,3,6] 
-meta_training_data = LoadData(tsv_file='dataset/meta_data/train/train.txt', clean_dir=data_path,SNR=noise_snr,noise=noise_type,num_spectograms=num_spectograms)
+meta_training_data = LoadData(tsv_file='dataset/meta_data/train/train.txt', clean_dir=data_path, SNR=noise_snr, noise=noise_type, num_spectograms=num_spectograms)
 
 #dataloaders
 meta_train_loader = DataLoader(meta_training_data,batch_size=4610,shuffle=True,num_workers=0)

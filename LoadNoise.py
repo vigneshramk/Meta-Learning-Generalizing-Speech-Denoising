@@ -12,8 +12,8 @@ import random
 
 
 class LoadData(Dataset):
-    def __init__(self, tsv_file, clean_dir, features=None, num_spectograms=30,single_frame=True,
-                    hop_size=160, n_fft=320, fs=16000,frame_size=11, SNR=None, noise=None):
+    def __init__(self, tsv_file, clean_dir, features=None, num_spectograms=30, single_frame=True,
+                    hop_size=160, n_fft=320, fs=16000, frame_size=11, SNR=None, noise=None):
 
         #Add each line to a list
         #tsv_file is the dataset which has names of files 
