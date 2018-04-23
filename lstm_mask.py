@@ -112,7 +112,7 @@ class Denoise():
         self.loss.backward()
         self.optimizer.step()
 
-        if j%10==0 and i==0:
+        if j%5==0 and i==0:
 
             state = {
                 'epoch': j,
@@ -120,7 +120,7 @@ class Denoise():
                 'optimizer': self.optimizer.state_dict(),
             }
 
-            str_path = model_path + '/model_lstm' + '.h5'
+            str_path = model_path + '/model_lstm_' + str(j) + '.h5'
             torch.save(state,str_path)
             print("Saving the model")
 
@@ -319,15 +319,16 @@ def main(args):
 
         # Normal training with one SNR
         num_samples = int(noisy_total.shape[0])
-        num_batches = num_samples/500
+        num_batches = num_samples/512
         loader = TestSpect('dataset/meta_data/test/test.txt',test_file, SNR=-6, noise=noise_type)
+        print('Testing '+ noise_type)
         test_loader = DataLoader(loader,batch_size=1,shuffle=True,num_workers=0)
 
         test_error_all = []
         print('Training.....')
         for j in range(num_epochs):
 
-            if (j+1) % 5 == 0 and train_all == 0:
+            if (j+1) % 5 == 0:
                 print('Testing....')
                 test_error = []
                 for i, batch in enumerate(test_loader):
