@@ -44,7 +44,7 @@ def np_to_variable(x, requires_grad=False, dtype=torch.FloatTensor):
     return v
 
 class LSTM_Mask(nn.Module):
-    def __init__(self, input_size = 161, hidden_size = 256 ,num_layers = 2,dropout = False, bidirectional = False):
+    def __init__(self, input_size = 161, hidden_size = 256 ,num_layers = 2,dropout = True, bidirectional = False):
         super(LSTM_Mask, self).__init__()
         self.input_size = input_size
         self.hidden_size = hidden_size
@@ -68,10 +68,12 @@ class Denoise():
         self.model = model
 
         self.criterion = nn.MSELoss()
-        self.optimizer = torch.optim.Adam(self.model.parameters(), lr=train_lr)
+
+        #Add L2 regularization through weight decay
+        self.optimizer = torch.optim.Adam(self.model.parameters(), lr=train_lr,weight_decay=0.5)
         # self.meta_optimizer = torch.optim.Adam(self.model.parameters(), lr=meta_lr)
 
-        self.meta_optimizer = Adam_Custom(self.model.parameters(), lr=meta_lr)
+        self.meta_optimizer = Adam_Custom(self.model.parameters(), lr=meta_lr,weight_decay=0.5)
 
     def get_weights(self):
 
