@@ -253,7 +253,7 @@ def main(args):
         if train_all == 1:
             print('Training All....')
             #all_noise = ['engine','factory1','babble']
-            all_noise =['factory1','babble','engine','ops'] # ONLY CHANGE THIS ONE. change to whatever noise types you want to train with 
+            all_noise =['factory1','babble']#,'engine','ops'] # ONLY CHANGE THIS ONE. change to whatever noise types you want to train with 
             file_name = exp_name  
             print(all_noise)
         else:
