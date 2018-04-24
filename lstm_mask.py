@@ -44,7 +44,7 @@ def np_to_variable(x, requires_grad=False, dtype=torch.FloatTensor):
     return v
 
 class LSTM_Mask(nn.Module):
-    def __init__(self, input_size = 161, hidden_size = 256 ,num_layers = 2,dropout = True, bidirectional = False):
+    def __init__(self, input_size = 161, hidden_size = 256 ,num_layers = 2,dropout = 0.2, bidirectional = False):
         super(LSTM_Mask, self).__init__()
         self.input_size = input_size
         self.hidden_size = hidden_size
