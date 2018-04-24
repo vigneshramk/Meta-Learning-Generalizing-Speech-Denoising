@@ -173,7 +173,8 @@ class Denoise():
 
 
             # Theta parameter update --- Meta-training mode
-            combined_loss = 0   
+            combined_loss = 0 
+            theta_copy = deepcopy(theta)  
             for t in range(num_tasks):
 
                 #Sample K datapoints from the task t
@@ -194,7 +195,7 @@ class Denoise():
 
                 # Set the model weights to theta before training
                 #Train with this theta on the D samples
-                self.set_weights(theta)
+                self.set_weights(theta_copy)
                 self.meta_optimizer.zero_grad()
                 grads = torch.autograd.grad(self.loss_outer, self.model.parameters())
                 #Pass the gradients directly to the Custom Adam optimizer
@@ -206,11 +207,12 @@ class Denoise():
                 # self.loss.backward()
                 # self.meta_optimizer.step()
 
-                # Theta will now have the updated parameters
-                theta = self.get_weights()
-
                 #Add up the losses from each of these networks
                 combined_loss += self.loss.data[0]
+
+            # Theta will now have the updated parameters
+            theta = self.get_weights()
+
 
             print("Average Loss in iteration %s is %.4f" %(i,combined_loss/num_tasks))
 
