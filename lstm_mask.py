@@ -70,10 +70,10 @@ class Denoise():
         self.criterion = nn.MSELoss()
 
         #Add L2 regularization through weight decay
-        self.optimizer = torch.optim.Adam(self.model.parameters(), lr=train_lr,weight_decay=0.5)
+        self.optimizer = torch.optim.Adam(self.model.parameters(), lr=train_lr,weight_decay=0.01)
         # self.meta_optimizer = torch.optim.Adam(self.model.parameters(), lr=meta_lr)
 
-        self.meta_optimizer = Adam_Custom(self.model.parameters(), lr=meta_lr,weight_decay=0.5)
+        self.meta_optimizer = Adam_Custom(self.model.parameters(), lr=meta_lr,weight_decay=0.01)
 
     def get_weights(self):
 
