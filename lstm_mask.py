@@ -44,7 +44,8 @@ def np_to_variable(x, requires_grad=False, dtype=torch.FloatTensor):
     return v
 
 class LSTM_Mask(nn.Module):
-    def __init__(self, input_size = 161, hidden_size = 256 ,num_layers = 2,dropout = True, bidirectional = False):
+    #make argparse dropout
+    def __init__(self, input_size = 161, hidden_size = 256 ,num_layers = 2, dropout = .2 , bidirectional = False):
         super(LSTM_Mask, self).__init__()
         self.input_size = input_size
         self.hidden_size = hidden_size
@@ -70,7 +71,9 @@ class Denoise():
         self.criterion = nn.MSELoss()
 
         #Add L2 regularization through weight decay
-        self.optimizer = torch.optim.Adam(self.model.parameters(), lr=train_lr,weight_decay=0.5)
+        #self.optimizer = torch.optim.Adam(self.model.parameters(), lr=train_lr,weight_decay=0.5)
+        #make this arg parse
+        self.optimizer = torch.optim.Adam(self.model.parameters(), lr=train_lr) 
         # self.meta_optimizer = torch.optim.Adam(self.model.parameters(), lr=meta_lr)
 
         self.meta_optimizer = Adam_Custom(self.model.parameters(), lr=meta_lr,weight_decay=0.5)
@@ -321,8 +324,8 @@ def main(args):
 
         # Normal training with one SNR
         num_samples = int(noisy_total.shape[0])
-        num_batches = num_samples/512
-        loader = TestSpect('dataset/meta_data/test/test.txt',test_file, SNR=-6, noise=noise_type)
+        num_batches = num_samples/128
+        loader = TestSpect('dataset/meta_data/test/test.txt',test_file, SNR=-3, noise=noise_type)
         print('Testing '+ noise_type)
         test_loader = DataLoader(loader,batch_size=1,shuffle=True,num_workers=0)
 
@@ -356,7 +359,7 @@ def main(args):
             clean_total = clean_total[shuffle_idx]
 
             total_loss = 0
-            step = 512
+            step = 128
             for i in range(0,num_samples-step,step):
                 clean = clean_total[i:i+step,:]
                 noise = noisy_total[i:i+step,:]
