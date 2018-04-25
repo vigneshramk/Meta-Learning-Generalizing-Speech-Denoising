@@ -337,8 +337,6 @@ def main(args):
                     if(i==20):
                        break
                     #print('Testing File: %d' % i)
-        
-
                     #get the clean magnitudes and the noise magnitude at the specific SNR
                     clean_mag = batch['clean_mag'].numpy()
                     noise_mag = batch['noise_mag'].numpy()
