@@ -281,25 +281,17 @@ def main(args):
             noisy_sq5 = np.reshape(noisy_data5,[noisy_data5.shape[0]*noisy_data5.shape[1],noisy_data5.shape[2],noisy_data5.shape[3]])
         
             noisy_total.extend(noisy_sq1)
-            #noisy_total.extend(noisy_sq2)
-            #noisy_total.extend(noisy_sq3)
-            #noisy_total.extend(noisy_sq4)
-            #noisy_total.extend(noisy_sq5)
-        
-            
+            noisy_total.extend(noisy_sq2)
+            noisy_total.extend(noisy_sq3)
+            noisy_total.extend(noisy_sq4)
+            noisy_total.extend(noisy_sq5)
 
             clean_sq1 = np.reshape(clean_data,[clean_data.shape[0]*clean_data.shape[1],clean_data.shape[2],clean_data.shape[3]])
-
-        
-
             clean_total.extend(clean_sq1)
-            #clean_total.extend(clean_sq1)
-            #clean_total.extend(clean_sq1)
-            #clean_total.extend(clean_sq1)
-            #clean_total.extend(clean_sq1)
-
-            
-    
+            clean_total.extend(clean_sq1)
+            clean_total.extend(clean_sq1)
+            clean_total.extend(clean_sq1)
+            clean_total.extend(clean_sq1)
 
         noisy_total = np.array(noisy_total)
         print(noisy_total.shape)
@@ -341,7 +333,6 @@ def main(args):
                     clean_mag = batch['clean_mag'].numpy()
                     noise_mag = batch['noise_mag'].numpy()
                     
-
                     _ , mse = test_mask(dae.model, clean_mag, noise_mag)
                     test_error.append(mse)
 
@@ -376,7 +367,7 @@ def main(args):
     else:
         print("meta training.....")
 
-        all_noise = ['factory1' , 'babble']
+        all_noise = ['babble']
         all_babble_noise = []
         all_babble_clean = []
         all_factory1_noise = []
@@ -401,19 +392,19 @@ def main(args):
             noisy_sq4 = np.reshape(noisy_data4,[noisy_data4.shape[0]*noisy_data4.shape[1],noisy_data4.shape[2],noisy_data4.shape[3]])
             noisy_sq5 = np.reshape(noisy_data5,[noisy_data5.shape[0]*noisy_data5.shape[1],noisy_data5.shape[2],noisy_data5.shape[3]])
         
-            noisy_total.extend(noisy_sq1)
-            noisy_total.extend(noisy_sq2)
-            noisy_total.extend(noisy_sq3)
-            noisy_total.extend(noisy_sq4)
-            noisy_total.extend(noisy_sq5)
+            noisy_total.append(noisy_sq1)
+            noisy_total.append(noisy_sq2)
+            noisy_total.append(noisy_sq3)
+            noisy_total.append(noisy_sq4)
+            noisy_total.append(noisy_sq5)
         
             clean_sq1 = np.reshape(clean_data,[clean_data.shape[0]*clean_data.shape[1],clean_data.shape[2],clean_data.shape[3]])
 
-            clean_total.extend(clean_sq1)
-            clean_total.extend(clean_sq1)
-            clean_total.extend(clean_sq1)
-            clean_total.extend(clean_sq1)
-            clean_total.extend(clean_sq1)
+            clean_total.append(clean_sq1)
+            clean_total.append(clean_sq1)
+            clean_total.append(clean_sq1)
+            clean_total.append(clean_sq1)
+            clean_total.append(clean_sq1)
 
             if n == 'factory1':
                 print('factory1 copy')
@@ -427,25 +418,26 @@ def main(args):
 
         noisy_total = []
         clean_total = []
-        print('Creating Meta Data')
+        # print('Creating Meta Data')
 
         print(all_babble_noise.shape)
-        print(all_factory1_noise.shape)
+        print(all_babble_clean.shape)
+        # print(all_factory1_noise.shape)
 
-        maml_data_noise = np.zeros((len(all_noise),all_babble_noise.shape[0],all_babble_noise.shape[1],all_babble_noise.shape[2]))
-        maml_data_clean = np.zeros((len(all_noise),all_babble_noise.shape[0],all_babble_noise.shape[1],all_babble_noise.shape[2]))
+        # maml_data_noise = np.zeros((len(all_noise),all_babble_noise.shape[0],all_babble_noise.shape[1],all_babble_noise.shape[2]))
+        # maml_data_clean = np.zeros((len(all_noise),all_babble_noise.shape[0],all_babble_noise.shape[1],all_babble_noise.shape[2]))
 
-        maml_data_noise[0] = all_babble_noise
-        maml_data_noise[1] = all_factory1_noise
+        # maml_data_noise[0] = all_babble_noise
+        # maml_data_noise[1] = all_factory1_noise
 
-        maml_data_clean[0] = all_babble_clean
-        maml_data_clean[1] = all_factory1_clean 
+        # maml_data_clean[0] = all_babble_clean
+        # maml_data_clean[1] = all_factory1_clean 
 
-        print(maml_data_noise.shape)
-        print(maml_data_clean.shape)
+        # print(maml_data_noise.shape)
+        # print(maml_data_clean.shape)
 
         #Meta-training with five SNR
-        dae.train_maml(maml_data_noise,maml_data_clean,train_datapts,meta_train_datapts,num_iter)
+        dae.train_maml(all_babble_noise,all_babble_clean,train_datapts,meta_train_datapts,num_iter)
 
 
 
