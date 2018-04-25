@@ -132,11 +132,11 @@ class Denoise():
 
         num_tasks,num_data,window_size,feature_size = meta_train_noisy.shape
 
-        path_name = './figures/maml_train_plots/' + file_name + '/'
-        str_path1 = 'training_loss_maml_mask_lstm_total_' + exp_name + '.png'
+        path_name = './figures/maml_train_plots/' + '/'
+        str_path1 = 'training_loss_maml_mask_lstm_total_' + 'test1' + '.png'
         plot1_name = os.path.join(path_name,str_path1)
 
-        model_path = 'models/lstm_mask_maml_train/' + file_name 
+        model_path = 'models/lstm_mask_maml_train/' + 'test1' 
 
         print(model_path)
         
@@ -234,9 +234,9 @@ class Denoise():
             print("Average Loss in iteration %s is %.4f" %(i,combined_loss/num_tasks))
 
             if (i%100 == 0):
-                print('Epoch %s done' %num_epochs)
+                print('Epoch %s done' %num_epoch)
                 state = {
-                    'epoch': num_epochs,
+                    'epoch': num_epoch,
                     'state_dict': self.model.state_dict(),
                     'optimizer': self.meta_optimizer.state_dict(),
                 }
