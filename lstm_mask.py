@@ -223,6 +223,7 @@ class Denoise():
                 self.meta_optimizer.zero_grad()
                 grads = torch.autograd.grad(self.loss_outer, self.model.parameters())
                 #Pass the gradients directly to the Custom Adam optimizer
+                self.set_weights(theta)
                 self.meta_optimizer.step(grads)
             
                 
@@ -231,11 +232,13 @@ class Denoise():
                 # self.loss.backward()
                 # self.meta_optimizer.step()
 
+                # Theta will now have the updated parameters
+                theta = self.get_weights()
+
                 #Add up the losses from each of these networks
                 combined_loss += self.loss_outer.data[0]
 
-            # Theta will now have the updated parameters
-            theta = self.get_weights()
+            
 
             print("Average Loss in iteration %s is %.4f" %(i,combined_loss/num_tasks))
 
