@@ -145,8 +145,8 @@ class Denoise():
         if not os.path.exists(model_path):
             os.makedirs(model_path)
 
-        loader = TestSpect('dataset/meta_data/test/test.txt',test_file, SNR=-6, noise=noise_type)
-        print('Testing '+ noise_type)
+        loader = TestSpect('dataset/meta_data/test/test.txt','./TIMIT/TEST', SNR=-6, noise='babble')
+        print('Testing '+ 'babble')
         test_loader = DataLoader(loader,batch_size=1,shuffle=True,num_workers=0)
 
         test_error_all = []
