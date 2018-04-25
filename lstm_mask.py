@@ -145,6 +145,12 @@ class Denoise():
         if not os.path.exists(model_path):
             os.makedirs(model_path)
 
+        loader = TestSpect('dataset/meta_data/test/test.txt',test_file, SNR=-6, noise=noise_type)
+        print('Testing '+ noise_type)
+        test_loader = DataLoader(loader,batch_size=1,shuffle=True,num_workers=0)
+
+        test_error_all = []
+
         K = train_datapts
         D = meta_train_datapts
 
@@ -243,6 +249,22 @@ class Denoise():
                 str_path = model_path + '/maml_lstm_' + str(num_epoch) + '.h5'
                 torch.save(state,str_path)
                 print("Saving the model")
+
+                print('Testing....')
+                test_error = []
+                for j, batch in enumerate(test_loader):
+                    if(j==20):
+                       break
+                    #print('Testing File: %d' % i)
+                    #get the clean magnitudes and the noise magnitude at the specific SNR
+                    clean_mag = batch['clean_mag'].numpy()
+                    noise_mag = batch['noise_mag'].numpy()
+                    
+                    _ , mse = test_mask(self.model, clean_mag, noise_mag)
+                    test_error.append(mse)
+
+                test_error_all.append(np.mean(test_error))
+                print(test_error_all)
 
 
 def main(args):
