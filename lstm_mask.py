@@ -128,15 +128,15 @@ class Denoise():
         return self.loss.data[0]
 
 
-    def train_maml(self,meta_train_noisy,meta_train_clean,train_datapts,meta_train_datapts,num_iter):
+    def train_maml(self,meta_train_noisy,meta_train_clean,train_datapts,meta_train_datapts,num_iter,test_file,file_name,noise_type):
 
         num_tasks,num_data,window_size,feature_size = meta_train_noisy.shape
 
         path_name = './figures/maml_train_plots/' + '/'
-        str_path1 = 'training_loss_maml_mask_lstm_total_' + 'test1' + '.png'
+        str_path1 = 'training_loss_maml_mask_lstm_total_' + file_name + '.png'
         plot1_name = os.path.join(path_name,str_path1)
 
-        model_path = 'models/lstm_mask_maml_train/' + 'test1' 
+        model_path = 'models/lstm_mask_maml_train/' + file_name 
 
         print(model_path)
         
@@ -145,7 +145,7 @@ class Denoise():
         if not os.path.exists(model_path):
             os.makedirs(model_path)
 
-        loader = TestSpect('dataset/meta_data/test/test.txt','./TIMIT/TEST', SNR=-6, noise='babble')
+        loader = TestSpect('dataset/meta_data/test/test.txt',test_file, SNR=-6, noise=noise_types)
         print('Testing '+ 'babble')
         test_loader = DataLoader(loader,batch_size=1,shuffle=True,num_workers=0)
 
@@ -486,8 +486,10 @@ def main(args):
         # print(maml_data_noise.shape)
         # print(maml_data_clean.shape)
 
+        file_name = exp_name
+
         #Meta-training with five SNR
-        dae.train_maml(all_babble_noise,all_babble_clean,train_datapts,meta_train_datapts,num_iter)
+        dae.train_maml(all_babble_noise,all_babble_clean,train_datapts,meta_train_datapts,num_iter,test_file,file_name,noise_type)
 
 
 
