@@ -70,10 +70,10 @@ class Denoise():
         self.criterion = nn.MSELoss()
 
         #Add L2 regularization through weight decay
-        self.optimizer = torch.optim.Adam(self.model.parameters(), lr=train_lr,weight_decay=0.01)
+        self.optimizer = torch.optim.Adam(self.model.parameters(), lr=train_lr,weight_decay=1e-4)
         # self.meta_optimizer = torch.optim.Adam(self.model.parameters(), lr=meta_lr)
 
-        self.meta_optimizer = Adam_Custom(self.model.parameters(), lr=meta_lr,weight_decay=0.01)
+        self.meta_optimizer = Adam_Custom(self.model.parameters(), lr=meta_lr,weight_decay=1e-4)
 
     def get_weights(self):
 
@@ -281,10 +281,10 @@ def main(args):
             noisy_sq5 = np.reshape(noisy_data5,[noisy_data5.shape[0]*noisy_data5.shape[1],noisy_data5.shape[2],noisy_data5.shape[3]])
         
             noisy_total.extend(noisy_sq1)
-            noisy_total.extend(noisy_sq2)
-            noisy_total.extend(noisy_sq3)
-            noisy_total.extend(noisy_sq4)
-            noisy_total.extend(noisy_sq5)
+            #noisy_total.extend(noisy_sq2)
+            #noisy_total.extend(noisy_sq3)
+            #noisy_total.extend(noisy_sq4)
+            #noisy_total.extend(noisy_sq5)
         
             
 
@@ -293,10 +293,10 @@ def main(args):
         
 
             clean_total.extend(clean_sq1)
-            clean_total.extend(clean_sq1)
-            clean_total.extend(clean_sq1)
-            clean_total.extend(clean_sq1)
-            clean_total.extend(clean_sq1)
+            #clean_total.extend(clean_sq1)
+            #clean_total.extend(clean_sq1)
+            #clean_total.extend(clean_sq1)
+            #clean_total.extend(clean_sq1)
 
             
     
@@ -334,7 +334,9 @@ def main(args):
                 print('Testing....')
                 test_error = []
                 for i, batch in enumerate(test_loader):
-                    print('Testing File: %d' % i)
+                    if(i==20):
+                       break
+                    #print('Testing File: %d' % i)
         
 
                     #get the clean magnitudes and the noise magnitude at the specific SNR
@@ -368,7 +370,7 @@ def main(args):
 
                 total_loss += loss
                 
-            print('epoch [{}/{}], MSE_loss:{:.4f}'.format(j + 1, num_epochs, total_loss/num_batches))
+            print('epoch [{}/{}], MSE_loss:{:.8f}'.format(j + 1, num_epochs, total_loss/num_batches))
             ax1.scatter(j+1, total_loss)
             if j%100 == 0:
                 ax1.figure.savefig(plot1_name)
