@@ -232,7 +232,7 @@ class Denoise():
                 # self.meta_optimizer.step()
 
                 #Add up the losses from each of these networks
-                combined_loss += self.loss.data[0]
+                combined_loss += self.loss_outer.data[0]
 
             # Theta will now have the updated parameters
             theta = self.get_weights()
@@ -417,7 +417,7 @@ def main(args):
     else:
         print("meta training.....")
 
-        all_noise = ['babble']
+        all_noise = ['factory1']
         all_babble_noise = []
         all_babble_clean = []
         all_factory1_noise = []
@@ -470,8 +470,8 @@ def main(args):
         clean_total = []
         # print('Creating Meta Data')
 
-        print(all_babble_noise.shape)
-        print(all_babble_clean.shape)
+        print(all_factory1_noise.shape)
+        print(all_factory1_clean.shape)
         # print(all_factory1_noise.shape)
 
         # maml_data_noise = np.zeros((len(all_noise),all_babble_noise.shape[0],all_babble_noise.shape[1],all_babble_noise.shape[2]))
