@@ -45,7 +45,7 @@ def np_to_variable(x, requires_grad=False, dtype=torch.FloatTensor):
     return v
 
 class LSTM_Mask(nn.Module):
-    def __init__(self, input_size = 161, hidden_size = 256 ,num_layers = 2,dropout = 0.2, bidirectional = False):
+    def __init__(self, input_size = 161, hidden_size = 256 ,num_layers = 2,dropout = 0.05, bidirectional = False):
         super(LSTM_Mask, self).__init__()
         self.input_size = input_size
         self.hidden_size = hidden_size
@@ -71,10 +71,10 @@ class Denoise():
         self.criterion = nn.MSELoss()
 
         #Add L2 regularization through weight decay
-        self.optimizer = torch.optim.Adam(self.model.parameters(), lr=train_lr,weight_decay=1e-4)
+        self.optimizer = torch.optim.Adam(self.model.parameters(), lr=train_lr,weight_decay=1e-6)
         # self.meta_optimizer = torch.optim.Adam(self.model.parameters(), lr=meta_lr)
 
-        self.meta_optimizer = Adam_Custom(self.model.parameters(), lr=meta_lr,weight_decay=1e-4)
+        self.meta_optimizer = Adam_Custom(self.model.parameters(), lr=meta_lr,weight_decay=1e-6)
 
     def get_weights(self):
 
@@ -145,8 +145,8 @@ class Denoise():
         if not os.path.exists(model_path):
             os.makedirs(model_path)
 
-        loader = TestSpect('dataset/meta_data/test/test.txt',test_file, SNR=-6, noise=noise_types)
-        print('Testing '+ 'babble')
+        loader = TestSpect('dataset/meta_data/test/test.txt',test_file, SNR=-6, noise=noise_type)
+        print('Testing '+ noise_type)
         test_loader = DataLoader(loader,batch_size=1,shuffle=True,num_workers=0)
 
         test_error_all = []
@@ -256,7 +256,7 @@ class Denoise():
                 print('Testing....')
                 test_error = []
                 for j, batch in enumerate(test_loader):
-                    if(j==20):
+                    if(j==50):
                        break
                     #print('Testing File: %d' % i)
                     #get the clean magnitudes and the noise magnitude at the specific SNR
@@ -492,7 +492,7 @@ def main(args):
         file_name = exp_name
 
         #Meta-training with five SNR
-        dae.train_maml(all_babble_noise,all_babble_clean,train_datapts,meta_train_datapts,num_iter,test_file,file_name,noise_type)
+        dae.train_maml(all_factory1_noise,all_factory1_clean,train_datapts,meta_train_datapts,num_iter,test_file,file_name,noise_type)
 
 
 
