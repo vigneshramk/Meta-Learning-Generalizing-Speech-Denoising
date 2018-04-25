@@ -16,6 +16,7 @@ import utils
 import matplotlib.pyplot as plt
 
 from adam_new import Adam_Custom
+from copy import deepcopy
 
 use_cuda = torch.cuda.is_available()
 
@@ -131,12 +132,29 @@ class Denoise():
 
         num_tasks,num_data,window_size,feature_size = meta_train_noisy.shape
 
+        path_name = './figures/maml_train_plots/' + file_name + '/'
+        str_path1 = 'training_loss_maml_mask_lstm_total_' + exp_name + '.png'
+        plot1_name = os.path.join(path_name,str_path1)
+
+        model_path = 'models/lstm_mask_maml_train/' + file_name 
+
+        print(model_path)
+        
+        if not os.path.exists(path_name):
+            os.makedirs(path_name)
+        if not os.path.exists(model_path):
+            os.makedirs(model_path)
+
         K = train_datapts
         D = meta_train_datapts
 
         theta_list = []
 
+        num_epoch = 0
         for i in range(num_iter):
+
+            if(i%100 == 0):
+                num_epoch +=1
 
             # Get the theta
             if i == 0:
@@ -213,8 +231,18 @@ class Denoise():
             # Theta will now have the updated parameters
             theta = self.get_weights()
 
-
             print("Average Loss in iteration %s is %.4f" %(i,combined_loss/num_tasks))
+
+            if (i%100 == 0):
+                print('Epoch %s done' %num_epochs)
+                state = {
+                    'epoch': num_epochs,
+                    'state_dict': self.model.state_dict(),
+                    'optimizer': self.meta_optimizer.state_dict(),
+                }
+                str_path = model_path + '/maml_lstm_' + str(num_epoch) + '.h5'
+                torch.save(state,str_path)
+                print("Saving the model")
 
 
 def main(args):
@@ -231,8 +259,8 @@ def main(args):
     save_name = args.save_file_name
     test_file = args.test_file
 
-    train_datapts = 100
-    meta_train_datapts = 100
+    train_datapts = 992
+    meta_train_datapts = 992
 
     num_iter = 10000
 
