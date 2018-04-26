@@ -244,8 +244,6 @@ class Denoise():
                 #Add up the losses from each of these networks
                 combined_loss += self.loss_outer.data[0]
 
-            
-
             print("Average Loss in iteration %s is %.4f" %(i,combined_loss/num_tasks))
 
             if (i%100 == 0):
@@ -424,11 +422,13 @@ def main(args):
     else:
         print("meta training.....")
 
-        all_noise = ['factory1']
+        all_noise = ['babble','factory1','engine']
         all_babble_noise = []
         all_babble_clean = []
         all_factory1_noise = []
         all_factory1_clean = []
+        all_engine_noise = []
+        all_engine_clean = []
         
         for n in all_noise:
             print(n)
@@ -473,12 +473,33 @@ def main(args):
                 all_babble_noise = np.copy(noisy_total)
                 all_babble_clean = np.copy(clean_total)
 
-        noisy_total = []
-        clean_total = []
-        # print('Creating Meta Data')
+            elif n == 'engine':
+                print('engine copy ')
+                all_engine_noise = np.copy(noisy_total)
+                all_engine_clean = np.copy(clean_total)
 
-        print(all_factory1_noise.shape)
-        print(all_factory1_clean.shape)
+        print("Babble shape")
+        print(all_babble_noise.shape,all_babble_clean.shape)
+        print("Factory shape")
+        print(all_factory1_noise.shape,all_factory1_clean.shape)
+        print("Engine shape")
+        print(all_engine_noise.shape,all_engine_clean.shape)
+
+        maml_noisy_data = []
+        maml_clean_data = []
+
+        maml_noisy_data.extend(all_babble_noise)
+        maml_noisy_data.extend(all_factory1_noise)
+        maml_noisy_data.extend(all_engine_noise)
+
+        maml_clean_data.extend(all_babble_clean)
+        maml_clean_data.extend(all_factory1_clean)
+        maml_clean_data.extend(all_engine_clean)
+
+        print("Size of total training")
+        print(maml_noisy_data.shape)
+        print(maml_clean_data.shape)
+
         # print(all_factory1_noise.shape)
 
         # maml_data_noise = np.zeros((len(all_noise),all_babble_noise.shape[0],all_babble_noise.shape[1],all_babble_noise.shape[2]))
@@ -496,7 +517,7 @@ def main(args):
         file_name = exp_name
 
         #Meta-training with five SNR
-        dae.train_maml(all_factory1_noise,all_factory1_clean,train_datapts,meta_train_datapts,num_iter,test_file,file_name,noise_type)
+        dae.train_maml(maml_noisy_data,maml_clean_data,train_datapts,meta_train_datapts,num_iter,test_file,file_name,noise_type)
 
 
 
