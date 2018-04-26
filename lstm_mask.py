@@ -379,9 +379,9 @@ def main(args):
             print('Testing....')
             test_error = []
             for i, batch in enumerate(test_loader):
+                # only test first 50 sample. This is randrom for every epochs
                 if(i==50):
                     break
-                #print('Testing File: %d' % i)
                 #get the clean magnitudes and the noise magnitude at the specific SNR
                 clean_mag = batch['clean_mag'].numpy()
                 noise_mag = batch['noise_mag'].numpy()
