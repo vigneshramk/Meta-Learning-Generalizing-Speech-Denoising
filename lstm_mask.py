@@ -46,7 +46,6 @@ def np_to_variable(x, requires_grad=False, dtype=torch.FloatTensor):
     return v
 
 class LSTM_Mask(nn.Module):
-<<<<<<< 3a72080e23c9e459874cbdbfe551842313d9c8c4
     #make argparse dropout
     def __init__(self, input_size = 161, hidden_size = 256 ,num_layers = 2, dropout = .2 , bidirectional = False):
         super(LSTM_Mask, self).__init__()
