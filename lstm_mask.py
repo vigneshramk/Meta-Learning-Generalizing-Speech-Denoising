@@ -130,7 +130,7 @@ class Denoise():
 
     def train_maml(self,meta_train_noisy,meta_train_clean,train_datapts,meta_train_datapts,num_iter,test_file,file_name,noise_type):
 
-        num_tasks,num_data,window_size,feature_size = meta_train_noisy.shape
+        num_tasks,num_data,_,_ = meta_train_noisy.shape
 
         path_name = './figures/maml_train_plots/' + '/'
         str_path1 = 'training_loss_maml_mask_lstm_total_' + file_name + '.png'
@@ -375,24 +375,22 @@ def main(args):
         print('Training.....')
         for j in range(num_epochs):
 
-            if (j+1) % 5 == 0:
-                print('Testing....')
-                test_error = []
-                for i, batch in enumerate(test_loader):
-                    if(i==20):
-                       break
-                    #print('Testing File: %d' % i)
-                    #get the clean magnitudes and the noise magnitude at the specific SNR
-                    clean_mag = batch['clean_mag'].numpy()
-                    noise_mag = batch['noise_mag'].numpy()
-                    
-                    _ , mse = test_mask(dae.model, clean_mag, noise_mag)
-                    test_error.append(mse)
+            # test after every epochs
+            print('Testing....')
+            test_error = []
+            for i, batch in enumerate(test_loader):
+                if(i==50):
+                    break
+                #print('Testing File: %d' % i)
+                #get the clean magnitudes and the noise magnitude at the specific SNR
+                clean_mag = batch['clean_mag'].numpy()
+                noise_mag = batch['noise_mag'].numpy()
+                
+                _ , mse = test_mask(dae.model, clean_mag, noise_mag)
+                test_error.append(mse)
 
-                test_error_all.append(np.mean(test_error))
-                print(test_error_all)
-
-
+            test_error_all.append(np.mean(test_error))
+            print(test_error_all)
 
             shuffle_idx = np.random.permutation(noisy_total.shape[0])
 
