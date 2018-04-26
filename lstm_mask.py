@@ -17,6 +17,7 @@ import matplotlib.pyplot as plt
 
 from adam_new import Adam_Custom
 from copy import deepcopy
+import time
 
 use_cuda = torch.cuda.is_available()
 
@@ -76,6 +77,8 @@ class Denoise():
 
         self.meta_optimizer = Adam_Custom(self.model.parameters(), lr=meta_lr,weight_decay=1e-6)
 
+        self.stamp = time.strftime("%Y%m%d-%H%M%S")
+
     def get_weights(self):
 
         curr_model = {'state_dict': self.model.state_dict()}
@@ -113,17 +116,17 @@ class Denoise():
         self.loss.backward()
         self.optimizer.step()
 
-        if j%5==0 and i==0:
+        # if j%5==0 and i==0:
+        # now saving model for every epoch with time stamp
+        state = {
+            'epoch': j,
+            'state_dict': self.model.state_dict(),
+            'optimizer': self.optimizer.state_dict(),
+        }
 
-            state = {
-                'epoch': j,
-                'state_dict': self.model.state_dict(),
-                'optimizer': self.optimizer.state_dict(),
-            }
-
-            str_path = model_path + '/model_lstm_' + str(j) + '.h5'
-            torch.save(state,str_path)
-            print("Saving the model")
+        str_path = model_path + '/model_lstm_'+ str(self.stamp) + '_' + str(j) + '.h5'
+        torch.save(state,str_path)
+        # print("Saving the model")
 
         return self.loss.data[0]
 
