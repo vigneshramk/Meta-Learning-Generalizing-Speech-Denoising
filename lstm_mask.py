@@ -47,7 +47,7 @@ def np_to_variable(x, requires_grad=False, dtype=torch.FloatTensor):
 
 class LSTM_Mask(nn.Module):
     #make argparse dropout
-    def __init__(self, input_size = 161, hidden_size = 256 ,num_layers = 2, dropout = .2 , bidirectional = False):
+    def __init__(self, input_size = 161, hidden_size = 256 ,num_layers = 2, dropout = 0 , bidirectional = False):
         super(LSTM_Mask, self).__init__()
         self.input_size = input_size
         self.hidden_size = hidden_size
@@ -75,10 +75,10 @@ class Denoise():
         #Add L2 regularization through weight decay
         #self.optimizer = torch.optim.Adam(self.model.parameters(), lr=train_lr,weight_decay=0.5)
         #make this arg parse
-        self.optimizer = torch.optim.Adam(self.model.parameters(), lr=train_lr,weight_decay=1e-4)
+        self.optimizer = torch.optim.Adam(self.model.parameters(), lr=train_lr,weight_decay=1e-6)
         # self.meta_optimizer = torch.optim.Adam(self.model.parameters(), lr=meta_lr)
 
-        self.meta_optimizer = Adam_Custom(self.model.parameters(), lr=meta_lr,weight_decay=1e-4)
+        self.meta_optimizer = Adam_Custom(self.model.parameters(), lr=meta_lr,weight_decay=1e-6)
 
         self.stamp = time.strftime("%Y%m%d-%H%M%S")
 
@@ -165,7 +165,7 @@ class Denoise():
         num_epoch = 0
         for i in range(num_iter):
 
-            if(i%100 == 0):
+            if(i%1000 == 0):
                 num_epoch +=1
 
             # Get the theta
@@ -246,7 +246,7 @@ class Denoise():
 
             print("Average Loss in iteration %s is %.4f" %(i,combined_loss/num_tasks))
 
-            if (i%100 == 0):
+            if (i%1000 == 0):
                 print('Epoch %s done' %num_epoch)
                 state = {
                     'epoch': num_epoch,
@@ -260,7 +260,7 @@ class Denoise():
                 print('Testing....')
                 test_error = []
                 for j, batch in enumerate(test_loader):
-                    if(j==50):
+                    if(j==0):
                        break
                     #print('Testing File: %d' % i)
                     #get the clean magnitudes and the noise magnitude at the specific SNR
@@ -288,10 +288,10 @@ def main(args):
     save_name = args.save_file_name
     test_file = args.test_file
 
-    train_datapts = 992
-    meta_train_datapts = 992
+    train_datapts = 99
+    meta_train_datapts = 99
 
-    num_iter = 10000
+    num_iter = 100000
 
     model = LSTM_Mask()
     if torch.cuda.is_available():
@@ -494,6 +494,8 @@ def main(args):
         maml_clean_data.extend(all_babble_clean)
         maml_clean_data.extend(all_factory1_clean)
         maml_clean_data.extend(all_engine_clean)
+        maml_noisy_data = np.array(maml_noisy_data)
+        maml_clean_data = np.array(maml_clean_data)
 
         print("Size of total training")
         print(maml_noisy_data.shape)
