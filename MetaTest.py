@@ -15,6 +15,7 @@ import lstm_mask
 from TestAddNoiseLoader import TestSpect
 from torch.utils.data import DataLoader
 import random
+from copy import deepcopy
 
 parser = argparse.ArgumentParser()
 parser.add_argument('--test_directory', type=str,
@@ -33,6 +34,10 @@ parser.add_argument('--reg_lr', type=float,
 						default=.01, help="path where model weight lies")
 parser.add_argument('--gradient_updates', type=int,
 						default=3, help="path where model weight lies")
+parser.add_argument('--batch_size', type=int,
+						default=128, help="path where model weight lies")
+parser.add_argument('--frame_size', type=int,
+						default=32, help="path where model weight lies")
 parser.add_argument('--save_audio', type=int,
 						default=0, help="if u want to save the audio files")
 parser.add_argument('--exp_name', type=str,
@@ -111,9 +116,9 @@ with open(output_path,'a') as f:
 loader = TestSpect('dataset/meta_data/test/test.txt',test_directory,SNR=noise_snr,noise=noise_type)
 test_loader = DataLoader(loader,batch_size=1,shuffle=True,num_workers=0)
 
-batch_size = 32
-frame_size = 11
-testing_size = 100
+batch_size = args.batch_size
+frame_size = args.frame_size
+testing_size = 1000
 batch_train = np.zeros((batch_size,frame_size,161))
 batch_labels = np.zeros((batch_size,frame_size,161))
 
@@ -129,8 +134,8 @@ for i, batch in enumerate(test_loader):
         width = spect_shape[1]
 
         start = random.sample(range(0,width-frame_size+1),1)
-        clean_C = clean_mag[start:start+frame_size,:]
-        noise_C = noise_mag[start:start+frame_size,:]
+        clean_C = clean_mag[0,start[0]:start[0]+frame_size,:]
+        noise_C = noise_mag[0,start[0]:start[0]+frame_size,:]
 
         batch_train[i,:,:] = noise_C
         batch_labels[i,:,:] = clean_C
@@ -140,11 +145,12 @@ for i, batch in enumerate(test_loader):
         print(batch_labels.shape)
         noise_batch = lstm_mask.np_to_variable(batch_train)
         clean_batch = lstm_mask.np_to_variable(batch_labels)
+        noise_batch_copy = deepcopy(noise_batch)
         print('Applying Gradients....')
         for k in range(K):
             
-            reg_approx = reg_model(noise_batch)
-            maml_approx = maml_model(noise_batch)
+            maml_approx = maml_model(noise_batch) 
+            reg_approx = reg_model(noise_batch_copy)
 
             reg_loss = criterion_reg(reg_approx, clean_batch)
             maml_loss = criterion_maml(maml_approx,clean_batch)
@@ -162,7 +168,7 @@ for i, batch in enumerate(test_loader):
             print('Maml loss %d: %f'% (k, maml_loss.data[0]))
 
     if i >= batch_size and i < batch_size + testing_size:
-        print('Testing Models.... %d' %(i-batch_size))
+        print('Testing Models.... %d' %(i-batch_size + 1))
 
         noise_audio = batch['noise_audio'].numpy()
         clean_audio = batch['clean_audio'].numpy()
@@ -200,6 +206,10 @@ for i, batch in enumerate(test_loader):
 
         print('Regular MSE: %f SDR: %f' % (reg_mse, reg_sdr))
         print('MAML MSE: %f SDR: %f' % (maml_mse, maml_sdr))
+
+    if i >= batch_size + testing_size:
+        break
+
 
 print('Done...')
 print(reg_model_directory)

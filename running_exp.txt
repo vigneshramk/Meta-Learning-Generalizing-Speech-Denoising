@@ -10,6 +10,9 @@ python CreateSpectograms.py --data_path ../path/to/timit/train --noise_type nois
     factory1
     ops
     bucc
+    dishes
+    bike
+    tap
 
 default specotgrams is 30 
 if u did 30 spectograms, your data will be in MetaLearningSpeech/spectograms_train30/noise/NOISETYPEYOUCHOSE
@@ -54,6 +57,13 @@ you choose what noise type to test at
 what snr to test at
 directory that leads directly to your model 
 exp_name is an attachment to the saved audio file. make it helpful
+
+
+
+STEP 4. META TEST
+
+SAMPLE
+python MetaTest.py --test_directory /Users/tylervgina/DataSets/LDC93S1/TIMITcorpus/TIMIT/TEST --reg_model_directory models/model_lstm_factory.h5 --maml_model_directory models/good_no_dropout.h5 --maml_lr .01 --reg_lr .01 --gradient_updates 2 --noise_type bike --noise_snr -3  --batch_size 128 --frame_size 32
 
 
 ALL TRAIN MODELS WILL BE IN 
