@@ -97,6 +97,8 @@ loader = TestSpect('dataset/meta_data/test/test.txt',test_directory,SNR=noise_sn
 test_loader = DataLoader(loader,batch_size=1,shuffle=True,num_workers=0)
 
 for i, batch in enumerate(test_loader):
+    if i == 1000:
+        break
     print('Testing File: %d' % i)
    
 

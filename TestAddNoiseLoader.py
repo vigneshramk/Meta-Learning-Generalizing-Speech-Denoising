@@ -54,6 +54,12 @@ class TestSpect(Dataset):
             [sub_noise, sub_fs] = librosa.load('noise/ops.wav',self.fs)
         elif self.noise == 'bucc':
             [sub_noise, sub_fs] = librosa.load('noise/bucc.wav',self.fs)
+        elif self.noise == 'dishes':
+            [sub_noise, sub_fs] = librosa.load('noise/dishes.wav',self.fs)
+        elif self.noise == 'bike':
+            [sub_noise, sub_fs] = librosa.load('noise/bike.wav',self.fs)
+        elif self.noise == 'tap':
+            [sub_noise, sub_fs] = librosa.load('noise/tap.wav',self.fs)
 
 
         elif self.noise =='white':
