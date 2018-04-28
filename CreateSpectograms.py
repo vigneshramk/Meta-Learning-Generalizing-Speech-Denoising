@@ -4,7 +4,7 @@ import numpy as np
 from torch.utils.data import DataLoader
 import argparse
 import os
-from tqdm import tqdm
+#from tqdm import tqdm
 
 parser = argparse.ArgumentParser()
 parser.add_argument('--data_path', type=str,

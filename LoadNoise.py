@@ -75,11 +75,11 @@ class LoadData(Dataset):
         elif self.noise == 'bucc':
             [noise_add, sub_fs] = librosa.load('noise/bucc.wav',self.fs)
         elif self.noise == 'dishes':
-            [sub_noise, sub_fs] = librosa.load('noise/dishes.wav',self.fs)
+            [noise_add, sub_fs] = librosa.load('noise/dishes.wav',self.fs)
         elif self.noise == 'bike':
-            [sub_noise, sub_fs] = librosa.load('noise/bike.wav',self.fs)
+            [noise_add, sub_fs] = librosa.load('noise/bike.wav',self.fs)
         elif self.noise == 'tap':
-            [sub_noise, sub_fs] = librosa.load('noise/tap.wav',self.fs)
+            [noise_add, sub_fs] = librosa.load('noise/tap.wav',self.fs)
 
         #creating the spectogram tensor that depends on how many SNR levels to add 
         #flatten_length = (self.n_fft/2 + 1) * self.frame_size
