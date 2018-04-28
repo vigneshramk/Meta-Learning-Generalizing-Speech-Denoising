@@ -232,26 +232,3 @@ print('MAML Mean MSE: %f Mean SDR %f Mean PESQ %f' % (np.mean(MSE_maml), np.mean
 with open(output_path,'a') as f:
     f.write(str(np.mean(MSE_reg))+ '\n' + str(np.mean(SDR_reg)) + '\n' + str(np.mean(PESQ_reg)) + '\n' 
             + str(np.mean(MSE_maml)) + '\n' + str(np.mean(SDR_maml) + '\n' + str(np.mean(PESQ_maml)) + '\n'))
-
-
-
-
-
-        
-
-
-    
-
-    
-
-
-
-
-
-
-
-
-        
-
-
-
