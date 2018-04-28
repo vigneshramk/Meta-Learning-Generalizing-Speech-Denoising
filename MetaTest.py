@@ -105,6 +105,8 @@ MSE_reg = []
 MSE_maml = []
 SDR_reg = []
 SDR_maml = []
+PESQ_reg = []
+PESQ_maml = []
 
 if not os.path.exists('meta_results/'):
     os.makedirs('meta_results/')
@@ -190,6 +192,9 @@ for i, batch in enumerate(test_loader):
         reg_sdr,sdr_noise = utils.calcluate_sdr(clean_audio, reg_reconstruct, noise_audio)
         maml_sdr,sdr_noise = utils.calcluate_sdr(clean_audio, maml_reconstruct, noise_audio)
 
+        reg_pesq = utils.calcluate_pesq(clean_audio, reg_reconstruct)
+        maml_pesq = utils.calcluate_pesq(clean_audio, maml_reconstruct)
+
         if save_audio==1 or i == batch_size:
             print('saving audio.....')
         
@@ -204,8 +209,11 @@ for i, batch in enumerate(test_loader):
         SDR_reg.append(reg_sdr)
         SDR_maml.append(maml_sdr)
 
-        print('Regular MSE: %f SDR: %f' % (reg_mse, reg_sdr))
-        print('MAML MSE: %f SDR: %f' % (maml_mse, maml_sdr))
+        PESQ_reg.append(reg_pesq)
+        PESQ_maml.append(maml_pesq)
+
+        print('Regular MSE: %f SDR: %f PESQ: %f' % (reg_mse, reg_sdr, reg_pesq))
+        print('MAML MSE: %f SDR: %f PESQ: %f' % (maml_mse, maml_sdr, maml_pesq))
 
     if i >= batch_size + testing_size:
         break
@@ -218,11 +226,12 @@ print(noise_type)
 print(noise_snr)
 print(K)
 
-print('Reg Mean MSE: %f Mean SDR %f' % (np.mean(MSE_reg), np.mean(SDR_reg)))
-print('MAML Mean MSE: %f Mean SDR %f' % (np.mean(MSE_maml), np.mean(SDR_maml)))
+print('Reg Mean MSE: %f Mean SDR %f Mean PESQ %f' % (np.mean(MSE_reg), np.mean(SDR_reg), np.mean(PESQ_reg)))
+print('MAML Mean MSE: %f Mean SDR %f Mean PESQ %f' % (np.mean(MSE_maml), np.mean(SDR_maml), np.mean(PESQ_maml)))
 
 with open(output_path,'a') as f:
-    f.write(str(np.mean(MSE_reg))+ '\n' + str(np.mean(SDR_reg)) + '\n' + str(np.mean(MSE_maml)) + '\n' + str(np.mean(SDR_maml)))
+    f.write(str(np.mean(MSE_reg))+ '\n' + str(np.mean(SDR_reg)) + '\n' + str(np.mean(PESQ_reg)) + '\n' 
+            + str(np.mean(MSE_maml)) + '\n' + str(np.mean(SDR_maml) + '\n' + str(np.mean(PESQ_maml)) + '\n'))
 
 
 

@@ -2,6 +2,9 @@ import numpy as np
 import numpy.random as rand
 import librosa
 import argparse
+import os
+from subprocess import check_output
+from scipy.io import wavfile
 
 def sample(x, length, num, verbose=False):
     """
@@ -78,8 +81,17 @@ def calcluate_sdr(clean,approx_clean,noise):
 
     return SDR_approx,SDR_noise
 
+
+def calcluate_pesq(clean, approx_clean):
+    if not os.path.exists('./tmp/'):
+        os.makedirs('./tmp/')
+    wavfile.write('./tmp/clean.WAV', 16000, clean)
+    wavfile.write('./tmp/approx_clean.WAV', 16000, approx_clean)
+    pesqDIR = 'metrics/PESQ/src'
+    testCMD = pesqDIR + '/PESQ +16000 ./tmp/clean.WAV ./tmp/approx_clean.WAV'
+    PESQScore = check_output(testCMD, shell=True)
     
-        
+    return float(PESQScore[-5:])
 
 
 def parse_arguments():
