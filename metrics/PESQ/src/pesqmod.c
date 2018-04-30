@@ -11,10 +11,10 @@ Version 1.2 - 2 August 2002.
 DEFINITIONS:
 ------------
 For the purposes of this Intellectual Property Rights Notice
-the terms ‘Perceptual Evaluation of Speech Quality Algorithm’
-and ‘PESQ Algorithm’ refer to the objective speech quality
+the terms ï¿½Perceptual Evaluation of Speech Quality Algorithmï¿½
+and ï¿½PESQ Algorithmï¿½ refer to the objective speech quality
 measurement algorithm defined in ITU-T Recommendation P.862;
-the term ‘PESQ Software’ refers to the C-code component of P.862. 
+the term ï¿½PESQ Softwareï¿½ refers to the C-code component of P.862. 
 
 NOTICE:
 -------
@@ -941,7 +941,7 @@ void pesq_psychoacoustic_model(SIGNAL_INFO    * ref_info,
         
         if (err_info-> Nutterances < 1) {
             printf ("Processing error!\n");
-            exit (1);
+            exit (0);
         }
 
         utt = err_info-> Nutterances - 1;
