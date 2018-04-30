@@ -20,10 +20,11 @@ from copy import deepcopy
 import time
 
 use_cuda = torch.cuda.is_available()
-
+#use_cuda =0
 print('Cuda')
 print(use_cuda)
-#CUDA_VISIBLE_DEVICES=2,3
+CUDA_VISIBLE_DEVICES=4,5
+os.environ["CUDA_VISIBLE_DEVICES"]="4,5"
 FloatTensor = torch.cuda.FloatTensor if use_cuda else torch.FloatTensor
 LongTensor = torch.cuda.LongTensor if use_cuda else torch.LongTensor
 ByteTensor = torch.cuda.ByteTensor if use_cuda else torch.ByteTensor
@@ -165,7 +166,7 @@ class Denoise():
         num_epoch = 0
         for i in range(num_iter):
 
-            if(i%1000 == 0):
+            if(i%100 == 0):
                 num_epoch +=1
 
             # Get the theta
@@ -246,7 +247,7 @@ class Denoise():
 
             print("Average Loss in iteration %s is %.4f" %(i,combined_loss/num_tasks))
 
-            if (i%1000 == 0):
+            if (i%100 == 0):
                 print('Epoch %s done' %num_epoch)
                 state = {
                     'epoch': num_epoch,
@@ -259,19 +260,19 @@ class Denoise():
 
                 print('Testing....')
                 test_error = []
-                for j, batch in enumerate(test_loader):
-                    if(j==0):
-                       break
+                #for j, batch in enumerate(test_loader):
+                #   if(j==0):
+                #       break
                     #print('Testing File: %d' % i)
                     #get the clean magnitudes and the noise magnitude at the specific SNR
-                    clean_mag = batch['clean_mag'].numpy()
-                    noise_mag = batch['noise_mag'].numpy()
+                #    clean_mag = batch['clean_mag'].numpy()
+                #    noise_mag = batch['noise_mag'].numpy()
                     
-                    _ , mse = test_mask(self.model, clean_mag, noise_mag)
-                    test_error.append(mse)
+                #    _ , mse = test_mask(self.model, clean_mag, noise_mag)
+                #    test_error.append(mse)
 
-                test_error_all.append(np.mean(test_error))
-                print(test_error_all)
+                #test_error_all.append(np.mean(test_error))
+                #print(test_error_all)
 
 
 def main(args):
@@ -288,10 +289,10 @@ def main(args):
     save_name = args.save_file_name
     test_file = args.test_file
 
-    train_datapts = 99
-    meta_train_datapts = 99
+    train_datapts = 461
+    meta_train_datapts = 461
 
-    num_iter = 100000
+    num_iter = 10000
 
     model = LSTM_Mask()
     if torch.cuda.is_available():
@@ -551,8 +552,6 @@ def main(args):
 
         #Meta-training with five SNR
         dae.train_maml(maml_noisy_data,maml_clean_data,train_datapts,meta_train_datapts,num_iter,test_file,file_name,noise_type)
-
-
 
 if __name__ == '__main__':
     main(sys.argv)
