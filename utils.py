@@ -90,9 +90,10 @@ def calcluate_pesq(clean, approx_clean):
     pesqDIR = 'metrics/PESQ/src'
     testCMD = pesqDIR + '/PESQ +16000 ./tmp/clean.WAV ./tmp/approx_clean.WAV'
     PESQScore = check_output(testCMD, shell=True)
-    if (PESQScore == 'Processing error!'):
-        return 0.0    
-    return float(PESQScore[-5:])
+    if (PESQScore[-2:] == 'PE'): # processing error
+        return 0.0
+    else:
+        return float(PESQScore[-5:])
 
 
 def parse_arguments():

@@ -940,7 +940,7 @@ void pesq_psychoacoustic_model(SIGNAL_INFO    * ref_info,
         short_term_fft (Nf, ref_info, Whanning, start_sample_ref, hz_spectrum_ref, fft_tmp);
         
         if (err_info-> Nutterances < 1) {
-            printf ("Processing error!\n");
+            printf ("PE");
             exit (0);
         }
 
