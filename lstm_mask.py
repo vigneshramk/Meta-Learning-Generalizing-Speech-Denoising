@@ -422,7 +422,7 @@ def main(args):
     else:
         print("meta training.....")
 
-        all_noise = ['babble','factory1','engine','bucc']
+        all_noise = ['babble','factory1','engine','bucc','ops','bike']
         all_babble_noise = []
         all_babble_clean = []
         all_factory1_noise = []
@@ -431,6 +431,10 @@ def main(args):
         all_engine_clean = []
         all_bucc_noise = []
         all_bucc_clean = []
+        all_ops_noise = []
+        all_ops_clean = []
+        all_bike_noise = []
+        all_bike_clean = []
         
         for n in all_noise:
             print(n)
@@ -467,22 +471,30 @@ def main(args):
 
             if n == 'factory1':
                 print('factory1 copy')
-                all_factory1_noise = np.copy(noisy_total)
-                all_factory1_clean = np.copy(clean_total)
+                all_factory1_noise = noisy_total
+                all_factory1_clean = clean_total
 
             elif n == 'babble':
                 print('babble copy ')
-                all_babble_noise = np.copy(noisy_total)
-                all_babble_clean = np.copy(clean_total)
+                all_babble_noise = noisy_total
+                all_babble_clean =  clean_total
 
             elif n == 'engine':
                 print('engine copy ')
-                all_engine_noise = np.copy(noisy_total)
-                all_engine_clean = np.copy(clean_total)
+                all_engine_noise =  noisy_total
+                all_engine_clean =  clean_total
             elif n == 'bucc':
                 print('bucc copy ')
-                all_bucc_noise = np.copy(noisy_total)
-                all_bucc_clean = np.copy(clean_total)
+                all_bucc_noise =  noisy_total
+                all_bucc_clean =  clean_total
+            elif n == 'ops':
+                print('ops copy ')
+                all_ops_noise =  noisy_total
+                all_ops_clean =  clean_total
+            elif n == 'bike':
+                print('bike copy ')
+                all_bike_noise =  noisy_total
+                all_bike_clean =  clean_total
 
         print("Babble shape")
         print(all_babble_noise.shape,all_babble_clean.shape)
@@ -492,6 +504,10 @@ def main(args):
         print(all_engine_noise.shape,all_engine_clean.shape)
         print("Bucc shape")
         print(all_bucc_noise.shape,all_bucc_clean.shape)
+        print("ops shape")
+        print(all_ops_noise.shape,all_ops_clean.shape)
+        print("bike shape")
+        print(all_bike_noise.shape,all_bike_clean.shape)
 
         maml_noisy_data = []
         maml_clean_data = []
@@ -500,11 +516,15 @@ def main(args):
         maml_noisy_data.extend(all_factory1_noise)
         maml_noisy_data.extend(all_engine_noise)
         maml_noisy_data.extend(all_bucc_noise)
+        maml_noisy_data.extend(all_ops_noise)
+        maml_noisy_data.extend(all_bike_noise)
 
         maml_clean_data.extend(all_babble_clean)
         maml_clean_data.extend(all_factory1_clean)
         maml_clean_data.extend(all_engine_clean)
         maml_clean_data.extend(all_bucc_clean)
+        maml_clean_data.extend(all_ops_clean)
+        maml_clean_data.extend(all_bike_clean)
 
         maml_noisy_data = np.array(maml_noisy_data)
         maml_clean_data = np.array(maml_clean_data)
@@ -531,7 +551,6 @@ def main(args):
 
         #Meta-training with five SNR
         dae.train_maml(maml_noisy_data,maml_clean_data,train_datapts,meta_train_datapts,num_iter,test_file,file_name,noise_type)
-+
 
 
 

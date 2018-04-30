@@ -21,7 +21,7 @@ parser = argparse.ArgumentParser()
 parser.add_argument('--test_directory', type=str,
 						default='../../Datasets/TIMIT/TEST', help="path for the data")
 parser.add_argument('--noise_type', type=str,
-						default='babble/', help="noise type") 
+						default='babble', help="noise type") 
 parser.add_argument('--noise_snr', type=str,
 						default='-6', help="noise snr to test at") 
 parser.add_argument('--reg_model_directory', type=str,
