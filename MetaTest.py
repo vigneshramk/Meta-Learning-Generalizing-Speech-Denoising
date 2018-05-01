@@ -94,7 +94,8 @@ with open(output_path,'a') as f:
 total_runs = args.runs
 total_SDR_reg = []
 total_SDR_maml = []
-
+total_PESQ_reg = []
+total_PESQ_maml = []
 
 loader = TestSpect('dataset/meta_data/test/test.txt',test_directory,SNR=noise_snr,noise=noise_type)
 test_loader = DataLoader(loader,batch_size=1,shuffle=True,num_workers=0)
@@ -211,9 +212,11 @@ for runs in range(total_runs):
             reg_pesq = utils.calcluate_pesq(clean_audio, reg_reconstruct)
             maml_pesq = utils.calcluate_pesq(clean_audio, maml_reconstruct)
             
-            if save_audio==1 or i == batch_size:
+            if maml_sdr > 2 and maml_sdr > reg_sdr + 3 and noise_snr == '-10':
                 print('saving audio.....')
-            
+                np.save('meta_results/approx_reg.npy',reg_reshaped)
+                np.save('meta_results/approx_maml.npy',maml_reshape)
+
                 wavfile.write('meta_results/reg_approx_' + noise_type + '_' + noise_snr + '_' + exp_name + '.WAV', 16000, reg_reconstruct)
                 wavfile.write('meta_results/maml_approx_' + noise_type + '_' + noise_snr + '_' + exp_name + '.WAV', 16000, maml_reconstruct)
                 wavfile.write('meta_results/actual_' + noise_type + '_' + noise_snr +  '_' + exp_name + '.WAV', 16000, noise_audio)
@@ -237,8 +240,8 @@ for runs in range(total_runs):
 
     total_SDR_reg.append(np.mean(SDR_reg))
     total_SDR_maml.append(np.mean(SDR_maml))
-
-
+    total_PESQ_reg.append(np.mean(PESQ_reg))
+    total_PESQ_maml.append(np.mean(PESQ_maml))
 
 print('Done...')
 print(reg_model_directory)
@@ -248,8 +251,8 @@ print(noise_snr)
 print(K)
 print(batch_size)
 
-print('Reg Mean MSE: %f Mean SDR %f Mean PESQ %f' % (np.mean(MSE_reg), np.mean(total_SDR_reg), np.var(total_SDR_reg)))
-print('MAML Mean MSE: %f Mean SDR %f Mean PESQ %f' % (np.mean(MSE_maml), np.mean(total_SDR_maml), np.var(total_SDR_maml)))
+print('Reg Mean MSE: %f Mean SDR %f Var SDR %f Mean PESQ %f Var PESQ %f' % (np.mean(MSE_reg), np.mean(total_SDR_reg), np.var(total_SDR_reg), np.mean(total_PESQ_reg),np.var(total_PESQ_reg)))
+print('MAML Mean MSE: %f Mean SDR %f Var SDR %f Mean PESQ %f Var PESQ %f' % (np.mean(MSE_maml), np.mean(total_SDR_maml), np.var(total_SDR_maml), np.mean(total_PESQ_maml),np.var(total_PESQ_maml)))
 
 with open(output_path,'a') as f:
     f.write(str(np.mean(MSE_reg))+ '\n' + str(np.mean(SDR_reg)) + '\n' + str(np.mean(PESQ_reg)) + '\n' 
