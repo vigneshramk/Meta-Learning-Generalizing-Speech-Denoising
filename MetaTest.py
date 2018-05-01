@@ -163,7 +163,7 @@ for runs in range(total_runs):
             print(batch_labels.shape)
             noise_batch = lstm_mask.np_to_variable(batch_train)
             clean_batch = lstm_mask.np_to_variable(batch_labels)
-            noise_batch_copy = deepcopy(noise_batch)
+            noise_batch_copy = lstm_mask.np_to_variable(batch_train)
             print('Applying Gradients....')
             for k in range(K):
                 
@@ -208,11 +208,9 @@ for runs in range(total_runs):
             reg_sdr,sdr_noise = utils.calcluate_sdr(clean_audio, reg_reconstruct, noise_audio)
             maml_sdr,sdr_noise = utils.calcluate_sdr(clean_audio, maml_reconstruct, noise_audio)
 
-    #        reg_pesq = utils.calcluate_pesq(clean_audio, reg_reconstruct)
-    #        maml_pesq = utils.calcluate_pesq(clean_audio, maml_reconstruct)
-
-            reg_pesq = 0
-            maml_pesq = 0
+            reg_pesq = utils.calcluate_pesq(clean_audio, reg_reconstruct)
+            maml_pesq = utils.calcluate_pesq(clean_audio, maml_reconstruct)
+            
             if save_audio==1 or i == batch_size:
                 print('saving audio.....')
             
@@ -226,9 +224,10 @@ for runs in range(total_runs):
 
             SDR_reg.append(reg_sdr)
             SDR_maml.append(maml_sdr)
-
-            PESQ_reg.append(reg_pesq)
-            PESQ_maml.append(maml_pesq)
+            
+            if reg_pesq!=0 and maml_pesq!=0:
+                PESQ_reg.append(reg_pesq)
+                PESQ_maml.append(maml_pesq)
 
             print('Regular MSE: %f SDR: %f PESQ: %f' % (reg_mse, reg_sdr, reg_pesq))
             print('MAML MSE: %f SDR: %f PESQ: %f' % (maml_mse, maml_sdr, maml_pesq))
